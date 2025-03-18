@@ -8,21 +8,21 @@ services:
     depends_on:
       - stats-db
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5433/stats-db
-      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats-db
+      - SPRING_DATASOURCE_USERNAME=sdb
       - SPRING_DATASOURCE_PASSWORD=password
 
   stats-db:
     image: postgres:16.1
     container_name: stats-db
     ports:
-      - "6541:5433"
+      - "6543:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/stats_data
+      - ./volumes/postgres/stats_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=sa
       - POSTGRES_DB=stats-db
+      - POSTGRES_USER=sdb
+      - POSTGRES_PASSWORD=password
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
@@ -39,8 +39,8 @@ services:
       - ewm-db
       - stats-server
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/ewm-db
-      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-db:5432/ewm-db
+      - SPRING_DATASOURCE_USERNAME=ewm
       - SPRING_DATASOURCE_PASSWORD=password
       - STATS_SERVER_URL=http://stats-server:9090
 
@@ -48,13 +48,13 @@ services:
     image: postgres:16.1
     container_name: ewm-db
     ports:
-      - "6541:5432"
+      - "6542:5432"
     environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=sa
       - POSTGRES_DB=ewm-db
+      - POSTGRES_USER=ewm
+      - POSTGRES_PASSWORD=password
     volumes:
-      - postgres_data:/var/lib/postgresql/ewm_data
+      - ./volumes/postgres/ewm_data:/var/lib/postgresql/data/
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s

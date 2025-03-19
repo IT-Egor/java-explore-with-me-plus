@@ -19,6 +19,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(ValidationException e) {
+        log.error("BAD_REQUEST", e);
         return ErrorResponse.builder()
                 .error(e.getMessage())
                 .timestamp(LocalDateTime.now())
@@ -29,6 +30,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMethodArgumentNotValidException(HttpMessageNotReadableException e) {
+        log.error("BAD_REQUEST", e);
         return ErrorResponse.builder()
                 .error(e.getMessage())
                 .timestamp(LocalDateTime.now())
@@ -39,6 +41,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("BAD_REQUEST", e);
         return ErrorResponse.builder()
                 .error(Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage())
                 .timestamp(LocalDateTime.now())

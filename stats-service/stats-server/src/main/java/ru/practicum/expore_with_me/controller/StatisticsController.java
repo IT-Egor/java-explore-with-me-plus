@@ -31,6 +31,6 @@ public class StatisticsController {
     Collection<GetResponse> getStatistics(@RequestParam Map<String, String> params) {
         params.putIfAbsent(uniqueParamName, defaultUniqueParamValue);
         GetRequest getRequest = HttpParametersToClassMapper.mapToClass(params, GetRequest.class);
-        throw new RuntimeException("Not implemented");
+        return statisticsService.getStatistics(getRequest);
     }
 }

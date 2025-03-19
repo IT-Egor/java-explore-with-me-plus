@@ -1,7 +1,5 @@
 package dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,13 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetRequest {
-    @NotBlank
     private LocalDateTime start;
-
-    @NotNull
     private LocalDateTime end;
-
-    @NotNull
     private List<String> uris;
 
     @Builder.Default

@@ -17,12 +17,12 @@ import java.util.List;
 public class GetRequest {
     @NotBlank
     @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\+([01][0-9]|2[0-3])%3A([0-5][0-9])%3A([0-5][0-9])$",
-            message = "Неправильный формат даты. Верный формат: yyyy-MM-dd HH:mm:ss")
+            message = "Invalid date. Correct format: yyyy-MM-dd HH:mm:ss")
     private final String start;
 
     @NotBlank
     @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\+([01][0-9]|2[0-3])%3A([0-5][0-9])%3A([0-5][0-9])$",
-            message = "Неправильный формат даты. Верный формат: yyyy-MM-dd HH:mm:ss")
+            message = "Invalid date. Correct format: yyyy-MM-dd HH:mm:ss")
     private final String end;
 
     @NotNull

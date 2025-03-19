@@ -8,6 +8,7 @@ import dto.GetResponse;
 import dto.HitRequest;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.expore_with_me.dao.HitRepository;
 import ru.practicum.expore_with_me.mapper.HitMapper;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
@@ -30,6 +32,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     public void createHit(HitRequest hitRequest) {
         Hit hit = hitMapper.requestToHit(hitRequest);
         hitRepository.save(hit);
+        log.info("Hit saved");
     }
 
     @Override
@@ -58,6 +61,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         List<Tuple> tuples = query.fetch();
 
+        log.info("Returned list of getResponses");
         return tuples.stream().map(tuple ->
                 GetResponse.builder()
                         .hits(tuple.get(0, Long.class).longValue())

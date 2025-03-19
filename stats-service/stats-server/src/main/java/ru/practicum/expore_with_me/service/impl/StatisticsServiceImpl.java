@@ -4,7 +4,6 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import dto.GetRequest;
 import dto.GetResponse;
 import dto.HitRequest;
 import jakarta.persistence.EntityManager;
@@ -34,12 +33,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public Collection<GetResponse> getStatistics(GetRequest getRequest) {
-        LocalDateTime start = getRequest.getStart();
-        LocalDateTime end = getRequest.getEnd();
-        List<String> uris = getRequest.getUris();
-        boolean unique = getRequest.isUnique();
-
+    public Collection<GetResponse> getStatistics(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         QHit qHit = QHit.hit;
 
         BooleanExpression whereClause = qHit.timestamp.between(start, end);

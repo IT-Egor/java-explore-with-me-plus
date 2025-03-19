@@ -2,28 +2,28 @@ package dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Data
 @Builder(toBuilder = true)
-@Getter
-@Setter
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 public class GetRequest {
     @NotBlank
-    private final LocalDateTime start;
+    private LocalDateTime start;
 
     @NotNull
-    private final LocalDateTime end;
+    private LocalDateTime end;
 
     @NotNull
-    private final List<String> uris;
+    private List<String> uris;
 
     @Builder.Default
-    private final boolean unique = false;
+    private boolean unique = false;
 }

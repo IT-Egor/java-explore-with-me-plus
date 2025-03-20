@@ -9,6 +9,7 @@ import ru.practicum.explore_with_me.user.dto.CreateUserRequest;
 import ru.practicum.explore_with_me.user.dto.CreateUserResponse;
 import ru.practicum.explore_with_me.user.mapper.UserMapper;
 import ru.practicum.explore_with_me.user.model.User;
+import ru.practicum.explore_with_me.user.service.UserFindService;
 import ru.practicum.explore_with_me.user.service.UserService;
 
 @Service
@@ -16,6 +17,7 @@ import ru.practicum.explore_with_me.user.service.UserService;
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
+    private final UserFindService userFindService;
 
     @Override
     public CreateUserResponse createUser(CreateUserRequest createUserRequest) {
@@ -29,5 +31,11 @@ public class UserServiceImpl implements UserService {
                 throw e;
             }
         }
+    }
+
+    @Override
+    public void deleteUserById(Long userId) {
+        userFindService.getUserById(userId);
+        userRepository.deleteById(userId);
     }
 }

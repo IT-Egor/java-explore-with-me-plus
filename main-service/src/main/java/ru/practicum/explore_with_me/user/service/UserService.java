@@ -5,4 +5,6 @@ import ru.practicum.explore_with_me.user.dto.CreateUserResponse;
 
 public interface UserService {
     CreateUserResponse createUser(CreateUserRequest createUserRequest);
+
+    void deleteUserById(Long userId);
 }

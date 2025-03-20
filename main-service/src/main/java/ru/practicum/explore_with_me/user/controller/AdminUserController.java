@@ -19,4 +19,10 @@ public class AdminUserController {
     public CreateUserResponse createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
         return userService.createUser(createUserRequest);
     }
+
+    @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable long userId) {
+        userService.deleteUserById(userId);
+    }
 }

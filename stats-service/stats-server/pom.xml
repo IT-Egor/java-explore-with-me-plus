@@ -53,6 +53,12 @@
             <classifier>jakarta</classifier>
             <version>5.1.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.6.0.Beta1</version>
+        </dependency>
     </dependencies>
 
     <build>

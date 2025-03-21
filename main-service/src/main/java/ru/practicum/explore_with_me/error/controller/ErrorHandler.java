@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
-import ru.practicum.explore_with_me.error.model.EmailAlreadyExistsException;
+import ru.practicum.explore_with_me.error.model.AlreadyExistsException;
 import ru.practicum.explore_with_me.error.model.ErrorResponse;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
 
@@ -19,15 +19,15 @@ import java.util.List;
 public class ErrorHandler {
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleEmailAlreadyExistException(EmailAlreadyExistsException e) {
-        String reasonMessage = "Email already exists";
-        log.error(String.format("BAD_REQUEST: %s", reasonMessage), e);
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleAlreadyExistException(AlreadyExistsException e) {
+        String reasonMessage = "Field already exists";
+        log.error(String.format("CONFLICT: %s", reasonMessage), e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase()))
+                .status(String.format("%s %s", HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReasonPhrase()))
                 .build();
     }
 

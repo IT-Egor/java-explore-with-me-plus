@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.category.dao.CategoryRepository;
-import ru.practicum.explore_with_me.category.dto.CategoryCreateRequest;
+import ru.practicum.explore_with_me.category.dto.CategoryMergeRequest;
 import ru.practicum.explore_with_me.category.dto.CategoryResponse;
 import ru.practicum.explore_with_me.category.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.category.model.Category;
@@ -27,19 +27,14 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryFinder categoryFinder;
 
     @Override
-    public CategoryResponse createCategory(CategoryCreateRequest categoryCreateRequest) {
+    public CategoryResponse createCategory(CategoryMergeRequest categoryMergeRequest) {
         try {
-            Category category = categoryMapper.requestToCategory(categoryCreateRequest);
+            Category category = categoryMapper.requestToCategory(categoryMergeRequest);
             CategoryResponse categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(category));
             log.info("Category with id={} was created", categoryResponse.getId());
             return categoryResponse;
         } catch (DataIntegrityViolationException e) {
-            if (e.getMessage().contains("categories_name_key")) {
-                log.warn("Category with name '{}' already exists", categoryCreateRequest.getName());
-                throw new AlreadyExistsException(String.format("Category with name '%s' already exists", categoryCreateRequest.getName()));
-            } else {
-                throw e;
-            }
+            throw checkUniqueConstraint(e, categoryMergeRequest.getName());
         }
     }
 
@@ -61,9 +56,31 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public CategoryResponse updateCategory(CategoryMergeRequest categoryMergeRequest, Long categoryId) {
+        try {
+            Category oldCategory = categoryFinder.findById(categoryId);
+            oldCategory.setName(categoryMergeRequest.getName());
+            CategoryResponse categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(oldCategory));
+            log.info("Category with id={} was updated", categoryId);
+            return categoryResponse;
+        } catch (DataIntegrityViolationException e) {
+            throw checkUniqueConstraint(e, categoryMergeRequest.getName());
+        }
+    }
+
+    @Override
     public void deleteCategoryById(Long categoryId) {
         categoryFinder.findById(categoryId);
         categoryRepository.deleteById(categoryId);
         log.info("Category with id={} was deleted", categoryId);
+    }
+
+    private RuntimeException checkUniqueConstraint(RuntimeException e, String categoryName) {
+        if (e.getMessage().contains("categories_name_key")) {
+            log.warn("Category with name '{}' already exists", categoryName);
+            return new AlreadyExistsException(String.format("Category with name '%s' already exists", categoryName));
+        }
+        log.warn("Data integrity violation", e);
+        return e;
     }
 }

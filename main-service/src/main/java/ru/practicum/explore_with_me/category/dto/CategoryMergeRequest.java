@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class CategoryCreateRequest {
+public class CategoryMergeRequest {
     @NotNull(message = "Name is required")
     @NotBlank(message = "Name is required")
     @Size(min = 1, max = 50, message = "Name length must be between 1 and 50 characters")

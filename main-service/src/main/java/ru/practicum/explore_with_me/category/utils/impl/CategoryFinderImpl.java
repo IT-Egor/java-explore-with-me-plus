@@ -20,10 +20,10 @@ public class CategoryFinderImpl implements CategoryFinder {
     public Category findById(Long categoryId) {
         Optional<Category> categoryOpt = repository.findById(categoryId);
         if (categoryOpt.isPresent()) {
-            log.info("Category with id {} found", categoryId);
+            log.info("Category with id={} found", categoryId);
             return categoryOpt.get();
         } else {
-            log.warn("Category with id {} not found", categoryId);
+            log.warn("Category with id={} not found", categoryId);
             throw new NotFoundException(String.format("Category with id=%d not found", categoryId));
         }
     }

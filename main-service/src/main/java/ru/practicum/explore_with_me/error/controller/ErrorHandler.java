@@ -27,7 +27,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReasonPhrase()))
+                .status(HttpStatus.CONFLICT.toString())
                 .build();
     }
 
@@ -40,7 +40,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase()))
+                .status(HttpStatus.BAD_REQUEST.toString())
                 .build();
     }
 
@@ -53,7 +53,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase()))
+                .status(HttpStatus.BAD_REQUEST.toString())
                 .build();
     }
 
@@ -66,7 +66,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase()))
+                .status(HttpStatus.BAD_REQUEST.toString())
                 .build();
     }
 
@@ -79,7 +79,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason("Entity not found")
-                .status(String.format("%s %s", HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase()))
+                .status(HttpStatus.NOT_FOUND.toString())
                 .build();
     }
 
@@ -92,7 +92,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(String.format("%s %s", HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase()))
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.toString())
                 .build();
     }
 }

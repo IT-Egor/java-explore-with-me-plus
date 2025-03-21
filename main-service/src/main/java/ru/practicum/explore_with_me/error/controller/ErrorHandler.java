@@ -71,15 +71,15 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
         String reasonMessage = "Entity not found";
-        log.error(String.format("BAD_REQUEST: %s", reasonMessage), e);
+        log.error(String.format("NOT_FOUND: %s", reasonMessage), e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason("Entity not found")
-                .status(String.format("%s %s", HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase()))
+                .status(String.format("%s %s", HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase()))
                 .build();
     }
 

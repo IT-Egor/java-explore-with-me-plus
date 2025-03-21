@@ -49,7 +49,7 @@ public class CategoryServiceImpl implements CategoryService {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Page<Category> page= categoryRepository.findAll(pageable);
+        Page<Category> page = categoryRepository.findAll(pageable);
 
         log.info("Get users with {from, size} = ({}, {})", from, size);
         return page.getContent().stream().map(categoryMapper::categoryToResponse).toList();

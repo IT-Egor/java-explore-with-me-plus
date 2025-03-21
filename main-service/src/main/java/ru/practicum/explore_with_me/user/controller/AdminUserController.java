@@ -1,12 +1,17 @@
 package ru.practicum.explore_with_me.user.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.user.dto.CreateUserRequest;
-import ru.practicum.explore_with_me.user.dto.CreateUserResponse;
+import ru.practicum.explore_with_me.user.dto.UserResponse;
 import ru.practicum.explore_with_me.user.service.UserService;
+
+import java.util.Collection;
+import java.util.List;
 
 @RestController
 @AllArgsConstructor
@@ -16,7 +21,7 @@ public class AdminUserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateUserResponse createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
+    public UserResponse createUser(@Valid @RequestBody CreateUserRequest createUserRequest) {
         return userService.createUser(createUserRequest);
     }
 
@@ -24,5 +29,13 @@ public class AdminUserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable long userId) {
         userService.deleteUserById(userId);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Collection<UserResponse> getUsers(@RequestParam(required = false) List<Long> ids,
+                                             @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                             @Positive @RequestParam(defaultValue = "10") int size) {
+        return userService.getUsers(ids, from, size);
     }
 }

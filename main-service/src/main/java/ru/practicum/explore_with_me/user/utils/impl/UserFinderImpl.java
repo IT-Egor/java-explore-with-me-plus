@@ -1,17 +1,17 @@
-package ru.practicum.explore_with_me.user.service.impl;
+package ru.practicum.explore_with_me.user.utils.impl;
 
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
 import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.model.User;
-import ru.practicum.explore_with_me.user.service.UserFindService;
+import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.util.Optional;
 
-@Service
+@Component
 @AllArgsConstructor
-public class UserFindServiceImpl implements UserFindService {
+public class UserFinderImpl implements UserFinder {
     private final UserRepository userRepository;
 
     @Override

@@ -29,7 +29,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentNotValidException(HttpMessageNotReadableException e) {
+    public ErrorResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.error("BAD_REQUEST", e);
         return ErrorResponse.builder()
                 .error(e.getMessage())
@@ -40,7 +40,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ErrorResponse handleHttpMessageNotReadableException(MethodArgumentNotValidException e) {
         log.error("BAD_REQUEST", e);
         return ErrorResponse.builder()
                 .error(Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage())

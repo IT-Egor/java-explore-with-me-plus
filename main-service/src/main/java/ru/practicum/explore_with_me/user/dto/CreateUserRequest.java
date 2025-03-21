@@ -16,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class CreateUserRequest {
     @NotNull(message = "Email is required")
-    @Email(message = "Email is required")
+    @Email(message = "Email is not valid")
     String email;
 
     @NotBlank(message = "Name is required")

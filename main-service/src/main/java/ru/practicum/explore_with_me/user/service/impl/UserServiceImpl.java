@@ -1,6 +1,7 @@
 package ru.practicum.explore_with_me.user.service.impl;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import ru.practicum.explore_with_me.user.utils.UserFinder;
 import java.util.Collection;
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -29,10 +31,13 @@ public class UserServiceImpl implements UserService {
     public UserResponse createUser(CreateUserRequest createUserRequest) {
         try {
             User user = userMapper.requestToUser(createUserRequest);
-            return userMapper.userToResponse(userRepository.save(user));
+            UserResponse userResponse = userMapper.userToResponse(userRepository.save(user));
+            log.info("User with id={} was created", userResponse.getId());
+            return userResponse;
         } catch (DataIntegrityViolationException e) {
             if (e.getMessage().contains("users_email_key")) {
-                throw new EmailAlreadyExistsException(String.format("User with email %s already exists", createUserRequest.getEmail()));
+                log.warn("User with email '{}' already exists", createUserRequest.getEmail());
+                throw new EmailAlreadyExistsException(String.format("User with email '%s' already exists", createUserRequest.getEmail()));
             } else {
                 throw e;
             }
@@ -51,6 +56,7 @@ public class UserServiceImpl implements UserService {
             page = userRepository.findAll(pageable);
         }
 
+        log.info("Get users with {ids, from, size} = ({}, {}, {})", userIds, from, size);
         return page.getContent().stream().map(userMapper::userToResponse).toList();
     }
 
@@ -58,5 +64,6 @@ public class UserServiceImpl implements UserService {
     public void deleteUserById(Long userId) {
         userFinder.getUserById(userId);
         userRepository.deleteById(userId);
+        log.info("User with id={} was deleted", userId);
     }
 }

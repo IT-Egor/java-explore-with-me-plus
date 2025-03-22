@@ -9,10 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
-import ru.practicum.explore_with_me.error.model.AlreadyExistsException;
-import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
-import ru.practicum.explore_with_me.error.model.ErrorResponse;
-import ru.practicum.explore_with_me.error.model.NotFoundException;
+import ru.practicum.explore_with_me.error.model.*;
 
 import java.util.List;
 
@@ -24,7 +21,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleAlreadyExistException(AlreadyExistsException e) {
         String reasonMessage = "Field already exists";
-        log.error(String.format("CONFLICT: %s", reasonMessage), e);
+        log.error("CONFLICT: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -37,7 +34,20 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleAlreadyPublishedException(AlreadyPublishedException e) {
         String reasonMessage = "Event already published";
-        log.error(String.format("CONFLICT: %s", reasonMessage), e);
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handlePublicationException(PublicationException e) {
+        String reasonMessage = "Publication failed";
+        log.error("CONFLICT: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -50,7 +60,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         String reasonMessage = "Body of the request is not readable";
-        log.error(String.format("CONFLICT: %s", reasonMessage), e);
+        log.error("CONFLICT: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -63,7 +73,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(ValidationException e) {
         String reasonMessage = "Validation failed";
-        log.error(String.format("BAD_REQUEST: %s", reasonMessage), e);
+        log.error("BAD_REQUEST: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -76,7 +86,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleHttpMessageNotReadableException(MethodArgumentNotValidException e) {
         String reasonMessage = "Method argument not valid";
-        log.error(String.format("BAD_REQUEST: %s", reasonMessage), e);
+        log.error("BAD_REQUEST: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -89,7 +99,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleHandlerMethodValidationException(HandlerMethodValidationException e) {
         String reasonMessage = "Handler method not valid";
-        log.error(String.format("BAD_REQUEST: %s", reasonMessage), e);
+        log.error("BAD_REQUEST: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -102,7 +112,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
         String reasonMessage = "Entity not found";
-        log.error(String.format("NOT_FOUND: %s", reasonMessage), e);
+        log.error("NOT_FOUND: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
@@ -115,7 +125,7 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleException(RuntimeException e) {
         String reasonMessage = "Unknown error";
-        log.error(String.format("INTERNAL_SERVER_ERROR: %s", reasonMessage), e);
+        log.error("INTERNAL_SERVER_ERROR: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())

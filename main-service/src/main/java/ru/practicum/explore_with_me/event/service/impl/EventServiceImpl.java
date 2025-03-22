@@ -13,11 +13,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
+import ru.practicum.explore_with_me.error.model.PublicationException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
-import ru.practicum.explore_with_me.event.dto.EventFullDto;
-import ru.practicum.explore_with_me.event.dto.EventShortDto;
-import ru.practicum.explore_with_me.event.dto.NewEventDto;
-import ru.practicum.explore_with_me.event.dto.UpdateEventUserRequest;
+import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.EventState;
@@ -57,10 +55,9 @@ public class EventServiceImpl implements EventService {
         return page.getContent().stream().map(eventMapper::toShortDto).toList();
     }
 
-    @Override
-    public Collection<EventFullDto> getAllEvents(Set<Long> users, Set<String> states, Set<Long> categories,
-                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
-                                                 Integer size) {
+    public Collection<EventFullDto> getAllEventsAdmin(Set<Long> users, Set<String> states, Set<Long> categories,
+                                                      LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
+                                                      Integer size) {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
@@ -82,10 +79,31 @@ public class EventServiceImpl implements EventService {
         }
 
         log.info("Get events with {users, states, categories,rangeStart,rangeEnd,from,size} = ({}, {}, {},{},{},{},{})",
-                users, size, categories,rangeStart,rangeEnd,from,size);
+                users, size, categories, rangeStart, rangeEnd, from, size);
         return page.stream()
                 .map(eventMapper::toFullDto)
                 .toList();
+    }
+
+    @Override
+    public EventFullDto patchEventById(Long eventId, AdminPatchEventDto adminPatchEventDto) {
+        Event event = eventFinder.findById(eventId);
+
+        if (event.getEventDate().isAfter(LocalDateTime.now().minusHours(1))) {
+            throw new PublicationException("Change event no later than one hour before the start");
+        }
+
+        publishedValidation(eventId, event, adminPatchEventDto.getStateAction());
+
+        if (adminPatchEventDto.getLocation() != null) {
+            Location location = locationFinder.findById(adminPatchEventDto.getLocation().getLat(),
+                    adminPatchEventDto.getLocation().getLon());
+            event.setLocation(location);
+        }
+
+        eventMapper.patchUserRequest(adminPatchEventDto, event);
+        log.info("Patch event with eventId = {}", eventId);
+        return eventMapper.toFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -112,14 +130,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = eventFinder.findById(userId, eventId);
 
-        if (event.getState().equals(EventState.PUBLISHED)) {
-            throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
-        }
-        if (updateRequest.getStateAction() != null) {
-            Map<EventStateAction, EventState> state = Map.of(EventStateAction.SEND_TO_REVIEW, EventState.PENDING,
-                    EventStateAction.CANCEL_REVIEW, EventState.CANCELED);
-            event.setState(state.get(updateRequest.getStateAction()));
-        }
+        publishedValidation(eventId, event, updateRequest.getStateAction());
         if (updateRequest.getLocation() != null) {
             Location location = locationFinder.findById(updateRequest.getLocation().getLat(),
                     updateRequest.getLocation().getLon());
@@ -129,5 +140,24 @@ public class EventServiceImpl implements EventService {
         eventMapper.updateUserRequest(updateRequest, event);
         log.info("Update event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
+    }
+
+    private void publishedValidation(Long eventId, Event event, EventStateAction stateAction) {
+        if (event.getState().equals(EventState.PUBLISHED)) {
+            throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
+        }
+
+        if (!event.getState().equals(EventState.PENDING) && stateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (stateAction != null) {
+            Map<EventStateAction, EventState> state = Map.of(
+                    EventStateAction.SEND_TO_REVIEW, EventState.PENDING,
+                    EventStateAction.CANCEL_REVIEW, EventState.CANCELED,
+                    EventStateAction.PUBLISH_EVENT, EventState.PUBLISHED,
+                    EventStateAction.REJECT_EVENT, EventState.CANCELED);
+            event.setState(state.get(stateAction));
+        }
     }
 }

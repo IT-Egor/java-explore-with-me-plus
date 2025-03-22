@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.explore_with_me.event.dto.AdminPatchEventDto;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.service.EventService;
 
@@ -29,9 +30,15 @@ public class AdminEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0", required = false) Integer from,
-            @RequestParam(defaultValue = "10", required = false) Integer size
-    ) {
-        log.info("Get request for all admin events for criteria");
-        return eventService.getAllEvents(users, states, categories, rangeStart, rangeEnd, from, size);
+            @RequestParam(defaultValue = "10", required = false) Integer size) {
+        log.info("Get request for all events for criteria");
+        return eventService.getAllEventsAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+    }
+
+    @PatchMapping("/{eventId}")
+    @ResponseStatus(HttpStatus.OK)
+    public EventFullDto patchEventById(@RequestBody AdminPatchEventDto adminPatchEventDto, @PathVariable Long eventId) {
+        log.info("Patch request for event by eventId = {}", eventId);
+        return eventService.patchEventById(eventId, adminPatchEventDto);
     }
 }

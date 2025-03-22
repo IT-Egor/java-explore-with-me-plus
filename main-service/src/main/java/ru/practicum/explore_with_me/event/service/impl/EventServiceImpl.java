@@ -31,6 +31,7 @@ import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,10 +63,12 @@ public class EventServiceImpl implements EventService {
                                                  Integer size) {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
+
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> root = criteriaQuery.from(Event.class);
         criteriaQuery.select(root);
+
         Specification<Event> specification = Specification
                 .where(EventFindSpecification.userIn(users))
                 .and(EventFindSpecification.stateIn(states))
@@ -73,6 +76,13 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
                 .and(EventFindSpecification.eventDateBefore(rangeEnd));
         Page<Event> page = eventRepository.findAll(specification, pageable);
+
+        if (page.isEmpty()) {
+            return List.of();
+        }
+
+        log.info("Get events with {users, states, categories,rangeStart,rangeEnd,from,size} = ({}, {}, {},{},{},{},{})",
+                users, size, categories,rangeStart,rangeEnd,from,size);
         return page.stream()
                 .map(eventMapper::toFullDto)
                 .toList();

@@ -13,7 +13,7 @@ public class EventFindSpecification {
             if (categories == null || categories.isEmpty()) {
                 return null;
             }
-            return root.get("category").in(categories);
+            return root.get("category").get("id").in(categories);
         });
     }
 
@@ -22,7 +22,7 @@ public class EventFindSpecification {
             if (users == null || users.isEmpty()) {
                 return null;
             }
-            return root.get("initiator").in(users);
+            return root.get("initiator").get("id").in(users);
         });
     }
 

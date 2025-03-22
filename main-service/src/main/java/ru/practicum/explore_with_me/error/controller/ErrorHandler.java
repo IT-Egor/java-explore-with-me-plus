@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.error.controller;
 
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -84,6 +85,19 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleUpdateStartDateException(UpdateStartDateException e) {
+        String reasonMessage = "Update start date failed";
+        log.error("BAD_REQUEST: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.BAD_REQUEST.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleHttpMessageNotReadableException(MethodArgumentNotValidException e) {
         String reasonMessage = "Method argument not valid";
         log.error("BAD_REQUEST: {}", reasonMessage, e);
@@ -118,6 +132,19 @@ public class ErrorHandler {
                 .message(e.getMessage())
                 .reason("Entity not found")
                 .status(HttpStatus.NOT_FOUND.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        String reasonMessage = "Related objects cannot be deleted";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
                 .build();
     }
 

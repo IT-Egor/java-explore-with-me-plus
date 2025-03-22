@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.event.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -37,7 +38,7 @@ public class AdminEventController {
 
     @PatchMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
-    public EventFullDto patchEventById(@RequestBody AdminPatchEventDto adminPatchEventDto, @PathVariable Long eventId) {
+    public EventFullDto patchEventById(@Valid @RequestBody AdminPatchEventDto adminPatchEventDto, @PathVariable Long eventId) {
         log.info("Patch request for event by eventId = {}", eventId);
         return eventService.patchEventById(eventId, adminPatchEventDto);
     }

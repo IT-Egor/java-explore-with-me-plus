@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
 import ru.practicum.explore_with_me.error.model.PublicationException;
+import ru.practicum.explore_with_me.error.model.UpdateStartDateException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
@@ -86,14 +87,32 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public EventFullDto patchEventById(Long eventId, AdminPatchEventDto adminPatchEventDto) {
         Event event = eventFinder.findById(eventId);
 
-        if (event.getEventDate().isAfter(LocalDateTime.now().minusHours(1))) {
+        LocalDateTime updateStartDate = adminPatchEventDto.getEventDate();
+
+        if (event.getState().equals(EventState.PUBLISHED) && LocalDateTime.now().isAfter(event.getPublishedOn().plusHours(1))) {
             throw new PublicationException("Change event no later than one hour before the start");
         }
 
-        publishedValidation(eventId, event, adminPatchEventDto.getStateAction());
+        if (updateStartDate != null && updateStartDate.isBefore(LocalDateTime.now())) {
+            throw new UpdateStartDateException("Date and time has already arrived");
+        }
+
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+
+        stateChanger(event, updateStateAction);
 
         if (adminPatchEventDto.getLocation() != null) {
             Location location = locationFinder.findById(adminPatchEventDto.getLocation().getLat(),
@@ -102,6 +121,10 @@ public class EventServiceImpl implements EventService {
         }
 
         eventMapper.patchUserRequest(adminPatchEventDto, event);
+        if (event.getState().equals(EventState.PUBLISHED)) {
+            event.setPublishedOn(LocalDateTime.now());
+        }
+
         log.info("Patch event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
     }
@@ -130,7 +153,11 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = eventFinder.findById(userId, eventId);
 
-        publishedValidation(eventId, event, updateRequest.getStateAction());
+        if (event.getState().equals(EventState.PUBLISHED)) {
+            throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
+        }
+
+        stateChanger(event, updateRequest.getStateAction());
         if (updateRequest.getLocation() != null) {
             Location location = locationFinder.findById(updateRequest.getLocation().getLat(),
                     updateRequest.getLocation().getLon());
@@ -142,15 +169,7 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(eventRepository.save(event));
     }
 
-    private void publishedValidation(Long eventId, Event event, EventStateAction stateAction) {
-        if (event.getState().equals(EventState.PUBLISHED)) {
-            throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
-        }
-
-        if (!event.getState().equals(EventState.PENDING) && stateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
-        }
-
+    private void stateChanger(Event event, EventStateAction stateAction) {
         if (stateAction != null) {
             Map<EventStateAction, EventState> state = Map.of(
                     EventStateAction.SEND_TO_REVIEW, EventState.PENDING,

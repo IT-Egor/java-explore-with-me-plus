@@ -1,5 +1,6 @@
 package ru.practicum.explore_with_me.event.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +22,10 @@ public class EventShortDto {
     String annotation;
     CategoryResponse category;
     Long confirmedRequests;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime eventDate;
+
     UserResponse initiator;
     Boolean paid;
     String title;

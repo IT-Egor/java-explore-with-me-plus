@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.error.controller;
 import jakarta.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -22,6 +23,19 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleAlreadyExistException(AlreadyExistsException e) {
         String reasonMessage = "Field already exists";
+        log.error(String.format("CONFLICT: %s", reasonMessage), e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        String reasonMessage = "Body of the request is not readable";
         log.error(String.format("CONFLICT: %s", reasonMessage), e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))

@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.event.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.explore_with_me.event.model.Location;
+import ru.practicum.explore_with_me.event.model.validation.EventDateTime;
 
 import java.time.LocalDateTime;
 
@@ -32,6 +34,7 @@ public class NewEventDto {
     String description;
 
     @NotNull
+    @EventDateTime
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime eventDate;
 
@@ -42,7 +45,9 @@ public class NewEventDto {
     @Size(min = 3, max = 120, message = "Title should be between 3 and 120 characters long")
     String title;
 
-    Boolean paid;
-    Integer participantLimit;
-    Boolean requestModeration;
+    @PositiveOrZero
+    Integer participantLimit = 0;
+
+    Boolean paid = false;
+    Boolean requestModeration = true;
 }

@@ -39,7 +39,7 @@ public class NewEventDto {
     LocalDateTime eventDate;
 
     @NotNull
-    Location location;
+    LocationDto location;
 
     @NotBlank
     @Size(min = 3, max = 120, message = "Title should be between 3 and 120 characters long")

@@ -1,10 +1,15 @@
 package ru.practicum.explore_with_me.event.service.impl;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
@@ -21,10 +26,13 @@ import ru.practicum.explore_with_me.event.model.Location;
 import ru.practicum.explore_with_me.event.service.EventService;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
 import ru.practicum.explore_with_me.event.utils.LocationFinder;
+import ru.practicum.explore_with_me.event.utils.specification.EventFindSpecification;
 import ru.practicum.explore_with_me.user.utils.UserFinder;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -35,6 +43,7 @@ public class EventServiceImpl implements EventService {
     private final EventFinder eventFinder;
     private final LocationFinder locationFinder;
     private final UserFinder userFinder;
+    private final EntityManager entityManager;
 
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
@@ -45,6 +54,28 @@ public class EventServiceImpl implements EventService {
 
         log.info("Get events with {userId, from, size} = ({}, {}, {})", userId, from, size);
         return page.getContent().stream().map(eventMapper::toShortDto).toList();
+    }
+
+    @Override
+    public Collection<EventFullDto> getAllEvents(Set<Long> users, Set<String> states, Set<Long> categories,
+                                                 LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
+                                                 Integer size) {
+        int pageNumber = from / size;
+        Pageable pageable = PageRequest.of(pageNumber, size);
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
+        Root<Event> root = criteriaQuery.from(Event.class);
+        criteriaQuery.select(root);
+        Specification<Event> specification = Specification
+                .where(EventFindSpecification.userIn(users))
+                .and(EventFindSpecification.stateIn(states))
+                .and(EventFindSpecification.categoryIn(categories))
+                .and(EventFindSpecification.eventDateAfter(rangeStart))
+                .and(EventFindSpecification.eventDateBefore(rangeEnd));
+        Page<Event> page = eventRepository.findAll(specification, pageable);
+        return page.stream()
+                .map(eventMapper::toFullDto)
+                .toList();
     }
 
     @Override

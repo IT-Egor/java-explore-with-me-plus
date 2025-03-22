@@ -8,6 +8,11 @@ import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

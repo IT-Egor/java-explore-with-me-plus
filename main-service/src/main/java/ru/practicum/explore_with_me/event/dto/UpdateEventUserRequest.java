@@ -35,7 +35,7 @@ public class UpdateEventUserRequest {
     String title;
 
     Long category;
-    Location location;
+    LocationDto location;
     Boolean paid;
 
     @PositiveOrZero

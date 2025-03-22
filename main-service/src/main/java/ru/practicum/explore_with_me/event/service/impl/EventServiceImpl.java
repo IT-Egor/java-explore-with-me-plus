@@ -7,8 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.explore_with_me.category.utils.CategoryFinder;
-import ru.practicum.explore_with_me.error.model.AlreadyExistsException;
+import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.dto.EventShortDto;
@@ -36,7 +35,6 @@ public class EventServiceImpl implements EventService {
     private final EventFinder eventFinder;
     private final LocationFinder locationFinder;
     private final UserFinder userFinder;
-    private final CategoryFinder categoryFinder;
 
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
@@ -74,7 +72,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventFinder.findById(userId, eventId);
 
         if (event.getState().equals(EventState.PUBLISHED)) {
-            throw new AlreadyExistsException("Event with eventId = " + eventId + "has already been published");
+            throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
         }
         if (updateRequest.getStateAction() != null) {
             Map<EventStateAction, EventState> state = Map.of(EventStateAction.SEND_TO_REVIEW, EventState.PENDING,

@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.event.model.validation;
+package ru.practicum.explore_with_me.event.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

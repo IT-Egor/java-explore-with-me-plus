@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.explore_with_me.event.model.EventStateAction;
 import ru.practicum.explore_with_me.event.model.Location;
-import ru.practicum.explore_with_me.event.model.validation.EventDateTime;
+import ru.practicum.explore_with_me.event.validation.EventDateTime;
 
 import java.time.LocalDateTime;
 

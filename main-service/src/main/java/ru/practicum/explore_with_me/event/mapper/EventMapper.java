@@ -14,6 +14,7 @@ import ru.practicum.explore_with_me.event.model.Event;
 @Mapper
 public interface EventMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "category.id", source = "category")
     @Mapping(target = "createdOn", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "state", expression = "java(ru.practicum.explore_with_me.event.model.EventState.PENDING)")

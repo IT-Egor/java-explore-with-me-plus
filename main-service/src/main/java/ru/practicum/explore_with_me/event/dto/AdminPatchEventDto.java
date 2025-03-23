@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.explore_with_me.event.model.EventStateAction;
+import ru.practicum.explore_with_me.event.model.enums.EventStateAction;
 
 import java.time.LocalDateTime;
 

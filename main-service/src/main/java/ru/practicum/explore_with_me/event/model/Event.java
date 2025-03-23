@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.explore_with_me.category.model.Category;
+import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.user.model.User;
 
 import java.time.LocalDateTime;

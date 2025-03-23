@@ -149,6 +149,19 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleGetPublicEventException(GetPublicEventException e) {
+        String reasonMessage = "Get event exception";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleException(RuntimeException e) {
         String reasonMessage = "Unknown error";

@@ -1,9 +1,12 @@
 package ru.practicum.explore_with_me.event.service.impl;
 
+import dto.GetResponse;
+import dto.HitRequest;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -12,16 +15,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.StatsClient;
 import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
+import ru.practicum.explore_with_me.error.model.GetPublicEventException;
 import ru.practicum.explore_with_me.error.model.PublicationException;
 import ru.practicum.explore_with_me.error.model.UpdateStartDateException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
 import ru.practicum.explore_with_me.event.model.Event;
-import ru.practicum.explore_with_me.event.model.EventState;
-import ru.practicum.explore_with_me.event.model.EventStateAction;
+import ru.practicum.explore_with_me.event.model.enums.EventState;
+import ru.practicum.explore_with_me.event.model.enums.EventStateAction;
 import ru.practicum.explore_with_me.event.model.Location;
+import ru.practicum.explore_with_me.event.model.enums.SortType;
 import ru.practicum.explore_with_me.event.service.EventService;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
 import ru.practicum.explore_with_me.event.utils.LocationFinder;
@@ -72,17 +78,57 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.stateIn(states))
                 .and(EventFindSpecification.categoryIn(categories))
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
-                .and(EventFindSpecification.eventDateBefore(rangeEnd));
+                .and(EventFindSpecification.eventDateBefore(rangeEnd))
+                .and(EventFindSpecification.onlyPublished());
         Page<Event> page = eventRepository.findAll(specification, pageable);
+
+        log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({}, {}, {},{},{},{},{})",
+                users, size, categories, rangeStart, rangeEnd, from, size);
 
         if (page.isEmpty()) {
             return List.of();
         }
 
-        log.info("Get events with {users, states, categories,rangeStart,rangeEnd,from,size} = ({}, {}, {},{},{},{},{})",
-                users, size, categories, rangeStart, rangeEnd, from, size);
         return page.stream()
                 .map(eventMapper::toFullDto)
+                .toList();
+    }
+
+    @Override
+    public Collection<EventShortDto> getAllEventsPublic(String text, Set<Long> categories, Boolean paid,
+                                                        LocalDateTime rangeStart, LocalDateTime rangeEnd,
+                                                        Boolean onlyAvailable, SortType sort, Integer from,
+                                                        Integer size, HttpServletRequest httpServletRequest) {
+        Pageable pageable = PageRequest.of(from / size, size);
+
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
+        Root<Event> root = criteriaQuery.from(Event.class);
+        criteriaQuery.select(root);
+        if (rangeStart == null){
+            rangeStart = LocalDateTime.now();
+        }
+
+        Specification<Event> specification = Specification
+                .where(EventFindSpecification.textInAnnotationOrDescription(text))
+                .and(EventFindSpecification.categoryIn(categories))
+                .and(EventFindSpecification.eventDateAfter(rangeStart))
+                .and(EventFindSpecification.eventDateBefore(rangeEnd))
+                .and(EventFindSpecification.isAvailable(onlyAvailable))
+                .and(EventFindSpecification.sortBySortType(sort));
+        Page<Event> page = eventRepository.findAll(specification,pageable);
+
+        saveViewInStatistic("/events",httpServletRequest.getRemoteAddr());
+
+        log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({}, {}, {},{},{},{},{},{},{})",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+
+        if (page.isEmpty()) {
+            return List.of();
+        }
+
+        return page.stream()
+                .map(eventMapper::toShortDto)
                 .toList();
     }
 
@@ -101,16 +147,7 @@ public class EventServiceImpl implements EventService {
             throw new UpdateStartDateException("Date and time has already arrived");
         }
 
-        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
-
-        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
-        }
-
-        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
-                && event.getState().equals(EventState.PUBLISHED)) {
-            throw new PublicationException("Cannot reject a published event");
-        }
+        EventStateAction updateStateAction = getUpdateStateAction(adminPatchEventDto, event);
 
         stateChanger(event, updateStateAction);
 
@@ -149,6 +186,22 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    public EventFullDto getEventByIdPublic(Long eventId, HttpServletRequest httpServletRequest) {
+        Event event = eventFinder.findById(eventId);
+
+        if (event.getState()!=EventState.PUBLISHED){
+            throw new GetPublicEventException("Event must be published");
+        }
+
+        saveViewInStatistic("/events/"+eventId,httpServletRequest.getRemoteAddr());
+        List<GetResponse> getResponses = loadViewInStatistic(null,null,List.of("/events/"+eventId),false);
+        GetResponse getResponse = getResponses.getFirst();
+        event.setViews(getResponse.getHits());
+        eventRepository.save(event);
+        return eventMapper.toFullDto(event);
+    }
+
+    @Override
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = eventFinder.findById(userId, eventId);
@@ -169,6 +222,20 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(eventRepository.save(event));
     }
 
+    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+        return updateStateAction;
+    }
+
     private void stateChanger(Event event, EventStateAction stateAction) {
         if (stateAction != null) {
             Map<EventStateAction, EventState> state = Map.of(
@@ -178,5 +245,18 @@ public class EventServiceImpl implements EventService {
                     EventStateAction.REJECT_EVENT, EventState.CANCELED);
             event.setState(state.get(stateAction));
         }
+    }
+
+    private void saveViewInStatistic(String uri, String ip){
+        HitRequest hitRequest = HitRequest.builder()
+                .app("ewm-main-service")
+                .uri(uri)
+                .ip(ip)
+                .build();
+        StatsClient.hit(hitRequest);
+    }
+
+    private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique){
+        return StatsClient.getStats(start,end,uris,unique);
     }
 }

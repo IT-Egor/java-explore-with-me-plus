@@ -18,10 +18,10 @@ import java.util.List;
 @Component
 public class StatsClient {
 
-    private final RestClient restClient = RestClient.create();
+    private static final RestClient restClient = RestClient.create();
     private static final String STATS_SERVER_URI = "http://localhost:9090";
 
-    public void hit(HitRequest hitRequest) {
+    public static void hit(HitRequest hitRequest) {
         String currentUri = UriComponentsBuilder.fromHttpUrl(STATS_SERVER_URI).path("/hit").toUriString();
         log.info("Post request to server uri = {}", currentUri);
 
@@ -39,7 +39,7 @@ public class StatsClient {
                 .toBodilessEntity();
     }
 
-    public List<GetResponse> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+    public static List<GetResponse> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         String currentUri = UriComponentsBuilder.fromHttpUrl(STATS_SERVER_URI)
                 .path("/stats")
                 .queryParam("start", start)

@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.explore_with_me.category.dto.CategoryResponse;
-import ru.practicum.explore_with_me.event.model.EventState;
-import ru.practicum.explore_with_me.event.model.Location;
+import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;

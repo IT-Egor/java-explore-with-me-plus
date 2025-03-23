@@ -1,8 +1,8 @@
 package dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +22,10 @@ public class HitRequest {
     private final String uri;
 
     @NotBlank
-    @Pattern(regexp = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
-            message = "Invalid IP address")
     private final String ip;
 
     @NotNull
-    private final LocalDateTime timestamp;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Builder.Default
+    private final LocalDateTime timestamp = LocalDateTime.now();
 }

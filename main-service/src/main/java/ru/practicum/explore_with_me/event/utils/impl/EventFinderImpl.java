@@ -15,7 +15,7 @@ public class EventFinderImpl implements EventFinder {
     private final EventRepository eventRepository;
 
     @Override
-    public Event findById(Long userId, Long eventId) {
+    public Event findByIdAndInitiatorId(Long userId, Long eventId) {
         log.info("Searching event with id = {} for user with id = {}", eventId, userId);
         return eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("User with id = " + userId + " and event with id = " + eventId

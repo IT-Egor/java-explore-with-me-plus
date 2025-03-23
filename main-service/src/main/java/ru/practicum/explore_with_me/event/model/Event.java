@@ -3,7 +3,6 @@ package ru.practicum.explore_with_me.event.model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.user.model.User;
@@ -38,7 +37,6 @@ public class Event {
     @Enumerated(EnumType.STRING)
     EventState state;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     LocalDateTime eventDate;
 
     @Column(length = 2000)

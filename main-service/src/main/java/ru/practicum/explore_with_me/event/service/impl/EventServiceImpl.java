@@ -52,20 +52,6 @@ public class EventServiceImpl implements EventService {
     private final UserFinder userFinder;
     private final EntityManager entityManager;
 
-    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
-        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
-
-        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
-        }
-
-        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
-                && event.getState().equals(EventState.PUBLISHED)) {
-            throw new PublicationException("Cannot reject a published event");
-        }
-        return updateStateAction;
-    }
-
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
         int pageNumber = from / size;
@@ -97,7 +83,7 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.onlyPublished());
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
-        log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({}, {}, {},{},{},{},{})",
+        log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
         return page.stream()
@@ -136,7 +122,7 @@ public class EventServiceImpl implements EventService {
 
         saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
 
-        log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({}, {}, {},{},{},{},{},{},{})",
+        log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({},{},{},{},{},{},{},{},{})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
         return page.stream()
@@ -194,7 +180,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
-        return eventMapper.toFullDto(eventFinder.findById(userId, eventId));
+        return eventMapper.toFullDto(eventFinder.findByIdAndInitiatorId(userId, eventId));
     }
 
     @Override
@@ -218,7 +204,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
-        Event event = eventFinder.findById(userId, eventId);
+        Event event = eventFinder.findByIdAndInitiatorId(userId, eventId);
 
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
@@ -234,6 +220,20 @@ public class EventServiceImpl implements EventService {
         eventMapper.updateUserRequest(updateRequest, event);
         log.info("Update event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
+    }
+
+    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+        return updateStateAction;
     }
 
     private void stateChanger(Event event, EventStateAction stateAction) {

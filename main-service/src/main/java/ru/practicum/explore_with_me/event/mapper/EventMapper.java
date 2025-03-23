@@ -1,10 +1,6 @@
 package ru.practicum.explore_with_me.event.mapper;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.model.Event;
 
@@ -25,7 +21,6 @@ public interface EventMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "category.id", source = "category")
     void updateUserRequest(UpdateEventUserRequest userRequest, @MappingTarget Event event);
-
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "category.id", source = "category")

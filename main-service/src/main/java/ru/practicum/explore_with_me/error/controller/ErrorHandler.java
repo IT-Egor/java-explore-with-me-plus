@@ -149,7 +149,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleGetPublicEventException(GetPublicEventException e) {
         String reasonMessage = "Get event exception";
         log.error("CONFLICT: {}", reasonMessage, e);
@@ -157,7 +157,7 @@ public class ErrorHandler {
                 .errors(List.of(e.getMessage()))
                 .message(e.getMessage())
                 .reason(reasonMessage)
-                .status(HttpStatus.CONFLICT.toString())
+                .status(HttpStatus.NOT_FOUND.toString())
                 .build();
     }
 

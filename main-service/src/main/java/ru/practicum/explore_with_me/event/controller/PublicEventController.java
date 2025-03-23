@@ -26,8 +26,7 @@ public class PublicEventController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<EventShortDto> getAllEventsPublic(
-            @RequestParam(required = false)
-            @Size(min = 1,max = 7000,message = "Description should be between 20 and 7000 characters long") String text,
+            @RequestParam(required = false) @Size(min = 1, max = 7000, message = "Description should be between 20 and 7000 characters long") String text,
             @RequestParam(required = false) Set<Long> categories,
             @RequestParam(required = false) Boolean paid,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeStart,
@@ -36,16 +35,16 @@ public class PublicEventController {
             @RequestParam(required = false) SortType sort,
             @RequestParam(required = false, defaultValue = "0") Integer from,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            HttpServletRequest httpServletRequest){
+            HttpServletRequest httpServletRequest) {
         log.info("Get request for all events for criteria");
-        return eventService.getAllEventsPublic(text,categories,paid,rangeStart,rangeEnd,onlyAvailable,sort,
-                from,size,httpServletRequest);
+        return eventService.getAllEventsPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
+                from, size, httpServletRequest);
     }
 
     @GetMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
-    public EventFullDto getEventByIdPublic(@PathVariable Long eventId, HttpServletRequest httpServletRequest){
-        log.info("Get request for event by id = {}",eventId);
-        return eventService.getEventByIdPublic(eventId,httpServletRequest);
+    public EventFullDto getEventByIdPublic(@PathVariable Long eventId, HttpServletRequest httpServletRequest) {
+        log.info("Get request for event by id = {}", eventId);
+        return eventService.getEventByIdPublic(eventId, httpServletRequest);
     }
 }

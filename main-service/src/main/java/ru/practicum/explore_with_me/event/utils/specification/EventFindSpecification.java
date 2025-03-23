@@ -68,35 +68,35 @@ public class EventFindSpecification {
 
             Predicate inAnnotation = criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("annotation")),
-                    "%"+lowerCaseText+"%"
+                    "%" + lowerCaseText + "%"
             );
 
             Predicate inDescription = criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("description")),
-                    "%"+lowerCaseText+"%"
+                    "%" + lowerCaseText + "%"
             );
 
-            return criteriaBuilder.or(inAnnotation,inDescription);
+            return criteriaBuilder.or(inAnnotation, inDescription);
         };
     }
 
-    public static Specification<Event> isAvailable(boolean onlyAvailable){
-        if (onlyAvailable){
+    public static Specification<Event> isAvailable(boolean onlyAvailable) {
+        if (onlyAvailable) {
             return ((root, query, criteriaBuilder) -> {
-                Predicate participantLimitNotZero = criteriaBuilder.lessThan(root.get("participantLimit"),0);
-                Predicate availableCondition =  criteriaBuilder
+                Predicate participantLimitNotZero = criteriaBuilder.lessThan(root.get("participantLimit"), 0);
+                Predicate availableCondition = criteriaBuilder
                         .lessThan(root.get("confirmedRequests"), root.get("participantLimit"));
-                return criteriaBuilder.and(participantLimitNotZero,availableCondition);
+                return criteriaBuilder.and(participantLimitNotZero, availableCondition);
             });
         }
         return null;
     }
 
-    public static Specification<Event> sortBySortType(SortType sortType){
+    public static Specification<Event> sortBySortType(SortType sortType) {
         return (root, query, criteriaBuilder) -> {
-            if (sortType != null){
+            if (sortType != null) {
                 Path<?> sortField = null;
-                switch (sortType){
+                switch (sortType) {
                     case VIEWS -> sortField = root.get("views");
                     case EVENT_DATE -> sortField = root.get("eventDate");
                 }
@@ -107,8 +107,8 @@ public class EventFindSpecification {
         };
     }
 
-    public static Specification<Event> onlyPublished(){
+    public static Specification<Event> onlyPublished() {
         return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("state"),EventState.PUBLISHED);
+                criteriaBuilder.equal(root.get("state"), EventState.PUBLISHED);
     }
 }

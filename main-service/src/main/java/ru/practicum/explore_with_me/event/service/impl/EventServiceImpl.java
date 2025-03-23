@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,9 +25,9 @@ import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
 import ru.practicum.explore_with_me.event.model.Event;
+import ru.practicum.explore_with_me.event.model.Location;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.event.model.enums.EventStateAction;
-import ru.practicum.explore_with_me.event.model.Location;
 import ru.practicum.explore_with_me.event.model.enums.SortType;
 import ru.practicum.explore_with_me.event.service.EventService;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
@@ -50,6 +51,20 @@ public class EventServiceImpl implements EventService {
     private final LocationFinder locationFinder;
     private final UserFinder userFinder;
     private final EntityManager entityManager;
+
+    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+        return updateStateAction;
+    }
 
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
@@ -85,10 +100,6 @@ public class EventServiceImpl implements EventService {
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({}, {}, {},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
-        if (page.isEmpty()) {
-            return List.of();
-        }
-
         return page.stream()
                 .map(eventMapper::toFullDto)
                 .toList();
@@ -101,13 +112,18 @@ public class EventServiceImpl implements EventService {
                                                         Integer size, HttpServletRequest httpServletRequest) {
         Pageable pageable = PageRequest.of(from / size, size);
 
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now();
+        }
+
+        if (rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new ValidationException("Time period incorrect");
+        }
+
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Event> criteriaQuery = criteriaBuilder.createQuery(Event.class);
         Root<Event> root = criteriaQuery.from(Event.class);
         criteriaQuery.select(root);
-        if (rangeStart == null){
-            rangeStart = LocalDateTime.now();
-        }
 
         Specification<Event> specification = Specification
                 .where(EventFindSpecification.textInAnnotationOrDescription(text))
@@ -116,16 +132,12 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateBefore(rangeEnd))
                 .and(EventFindSpecification.isAvailable(onlyAvailable))
                 .and(EventFindSpecification.sortBySortType(sort));
-        Page<Event> page = eventRepository.findAll(specification,pageable);
+        Page<Event> page = eventRepository.findAll(specification, pageable);
 
-        saveViewInStatistic("/events",httpServletRequest.getRemoteAddr());
+        saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
 
         log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({}, {}, {},{},{},{},{},{},{})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
-
-        if (page.isEmpty()) {
-            return List.of();
-        }
 
         return page.stream()
                 .map(eventMapper::toShortDto)
@@ -189,15 +201,17 @@ public class EventServiceImpl implements EventService {
     public EventFullDto getEventByIdPublic(Long eventId, HttpServletRequest httpServletRequest) {
         Event event = eventFinder.findById(eventId);
 
-        if (event.getState()!=EventState.PUBLISHED){
+        if (event.getState() != EventState.PUBLISHED) {
             throw new GetPublicEventException("Event must be published");
         }
 
-        saveViewInStatistic("/events/"+eventId,httpServletRequest.getRemoteAddr());
-        List<GetResponse> getResponses = loadViewInStatistic(null,null,List.of("/events/"+eventId),false);
-        GetResponse getResponse = getResponses.getFirst();
-        event.setViews(getResponse.getHits());
-        eventRepository.save(event);
+        saveViewInStatistic("/events/" + eventId, httpServletRequest.getRemoteAddr());
+        List<GetResponse> getResponses = loadViewInStatistic(event.getPublishedOn(), LocalDateTime.now(), List.of("/events/" + eventId), true);
+        if (!getResponses.isEmpty()) {
+            GetResponse getResponse = getResponses.getFirst();
+            event.setViews(getResponse.getHits());
+            eventRepository.save(event);
+        }
         return eventMapper.toFullDto(event);
     }
 
@@ -222,20 +236,6 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(eventRepository.save(event));
     }
 
-    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
-        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
-
-        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
-        }
-
-        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
-                && event.getState().equals(EventState.PUBLISHED)) {
-            throw new PublicationException("Cannot reject a published event");
-        }
-        return updateStateAction;
-    }
-
     private void stateChanger(Event event, EventStateAction stateAction) {
         if (stateAction != null) {
             Map<EventStateAction, EventState> state = Map.of(
@@ -247,7 +247,7 @@ public class EventServiceImpl implements EventService {
         }
     }
 
-    private void saveViewInStatistic(String uri, String ip){
+    private void saveViewInStatistic(String uri, String ip) {
         HitRequest hitRequest = HitRequest.builder()
                 .app("ewm-main-service")
                 .uri(uri)
@@ -256,7 +256,7 @@ public class EventServiceImpl implements EventService {
         StatsClient.hit(hitRequest);
     }
 
-    private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique){
-        return StatsClient.getStats(start,end,uris,unique);
+    private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        return StatsClient.getStats(start, end, uris, unique);
     }
 }

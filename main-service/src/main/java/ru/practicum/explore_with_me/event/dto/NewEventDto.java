@@ -11,7 +11,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.explore_with_me.event.model.Location;
 import ru.practicum.explore_with_me.event.validation.EventDateTime;
 
 import java.time.LocalDateTime;

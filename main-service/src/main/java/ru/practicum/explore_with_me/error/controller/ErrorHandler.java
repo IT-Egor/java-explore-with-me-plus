@@ -138,7 +138,59 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        String reasonMessage = "Related objects cannot be deleted";
+        String reasonMessage = "Related objects delete";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleNotPublishedEventRequestException(NotPublishedEventRequestException e) {
+        String reasonMessage = "Request to not published event";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleRequestLimitException(RequestLimitException e) {
+        String reasonMessage = "Limit request";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDuplicateRequestException(DuplicateRequestException e) {
+        String reasonMessage = "Duplicate request";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleInitiatorRequestException(InitiatorRequestException e) {
+        String reasonMessage = "Initiator request";
         log.error("CONFLICT: {}", reasonMessage, e);
         return ErrorResponse.builder()
                 .errors(List.of(e.getMessage()))

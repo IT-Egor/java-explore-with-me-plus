@@ -1,0 +1,16 @@
+package ru.practicum.explore_with_me.request.dao;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+import ru.practicum.explore_with_me.request.model.Request;
+
+import java.util.Optional;
+import java.util.Set;
+
+@Repository
+public interface RequestRepository extends JpaRepository<Request, Long>, JpaSpecificationExecutor<Request> {
+    Optional<Request> findByRequesterIdAndEventId(Long requesterId, Long eventId);
+
+    Set<Request> findAllByRequesterId(Long requesterId);
+}

@@ -9,8 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.compilations.dao.CompilationRepository;
-import ru.practicum.explore_with_me.compilations.dto.CompilationMergeRequest;
+import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
+import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
@@ -33,10 +34,10 @@ public class CompilationServiceImpl implements CompilationService {
     private final EntityManager entityManager;
 
     @Override
-    public CompilationResponse create(CompilationMergeRequest compilationMergeRequest) {
+    public CompilationResponse create(CreateCompilationRequest createCompilationRequest) {
         Compilation compilation = compilationMapper.createRequestToCompilation(
-                compilationMergeRequest,
-                eventFinder.findAllByIdIn(compilationMergeRequest.getEvents()));
+                createCompilationRequest,
+                eventFinder.findAllByIdIn(createCompilationRequest.getEvents()));
         CompilationResponse response = compilationMapper.compilationToResponse(compilationRepository.save(compilation));
         log.info("Compilation with id={} was created", response.getId());
         return compilationMapper.compilationToResponse(compilation);
@@ -67,5 +68,17 @@ public class CompilationServiceImpl implements CompilationService {
         compilationFinder.findById(compilationId);
         compilationRepository.deleteById(compilationId);
         log.info("Compilation with id={} was deleted", compilationId);
+    }
+
+    @Override
+    public CompilationResponse update(Long compilationId, UpdateCompilationRequest updateCompilationRequest) {
+        Compilation compilation = compilationFinder.findById(compilationId);
+        compilationMapper.compilationUpdateRequest(
+                updateCompilationRequest,
+                compilation,
+        eventFinder.findAllByIdIn(updateCompilationRequest.getEvents()));
+        compilationRepository.save(compilation);
+        log.info("Compilation with id={} was updated", compilation.getId());
+        return compilationMapper.compilationToResponse(compilation);
     }
 }

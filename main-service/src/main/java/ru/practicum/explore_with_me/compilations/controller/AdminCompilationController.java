@@ -18,8 +18,15 @@ public class AdminCompilationController {
 
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public CompilationResponse create(@Valid @RequestBody CompilationMergeRequest compilationMergeRequest) {
+    public CompilationResponse createCompilation(@Valid @RequestBody CompilationMergeRequest compilationMergeRequest) {
         log.info("Compilation POST request");
         return compilationService.create(compilationMergeRequest);
+    }
+    
+    @DeleteMapping("/{compId}")
+    @ResponseStatus(code = HttpStatus.NO_CONTENT)
+    public void deleteCompilation(@PathVariable(name = "compId") long compilationId) {
+        log.info("Compilation DELETE request");
+        compilationService.deleteById(compilationId);
     }
 }

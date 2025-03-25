@@ -19,7 +19,6 @@ public class AdminCategoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryResponse createCategory(@Valid @RequestBody CategoryMergeRequest request) {
-        log.info("Create category request");
         return categoryService.createCategory(request);
     }
 
@@ -27,14 +26,12 @@ public class AdminCategoryController {
     @ResponseStatus(HttpStatus.OK)
     public CategoryResponse updateCategory(@Valid @RequestBody CategoryMergeRequest request,
                                            @PathVariable(name = "catId") Long categoryId) {
-        log.info("Update category with id={} request", categoryId);
         return categoryService.updateCategory(request, categoryId);
     }
 
     @DeleteMapping("/{catId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable(name = "catId") Long categoryId) {
-        log.info("Delete category with id={} request", categoryId);
         categoryService.deleteCategoryById(categoryId);
     }
 }

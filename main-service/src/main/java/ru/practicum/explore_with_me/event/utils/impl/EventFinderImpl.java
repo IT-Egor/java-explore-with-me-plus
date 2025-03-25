@@ -8,6 +8,8 @@ import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
 
+import java.util.Set;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,5 +29,11 @@ public class EventFinderImpl implements EventFinder {
         log.info("Searching event with id = {}", eventId);
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id = %s, not found", eventId)));
+    }
+
+    @Override
+    public Set<Event> findAllByIdIn(Set<Long> ids) {
+        log.info("Searching events with ids = {}", ids);
+        return eventRepository.findAllByIdIn(ids);
     }
 }

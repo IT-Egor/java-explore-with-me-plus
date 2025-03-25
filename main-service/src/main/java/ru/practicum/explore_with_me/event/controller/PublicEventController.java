@@ -36,7 +36,6 @@ public class PublicEventController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size,
             HttpServletRequest httpServletRequest) {
-        log.info("Get request for all events for criteria");
         return eventService.getAllEventsPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
                 from, size, httpServletRequest);
     }
@@ -44,7 +43,6 @@ public class PublicEventController {
     @GetMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto getEventByIdPublic(@PathVariable Long eventId, HttpServletRequest httpServletRequest) {
-        log.info("Get request for event by id = {}", eventId);
         return eventService.getEventByIdPublic(eventId, httpServletRequest);
     }
 }

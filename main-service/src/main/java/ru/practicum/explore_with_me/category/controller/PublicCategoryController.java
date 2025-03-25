@@ -25,14 +25,12 @@ public class PublicCategoryController {
 
                                                       @Positive(message = "size must be greater than zero")
                                                       @RequestParam(defaultValue = "10") int size) {
-        log.info("Get categories request");
         return categoryService.getCategories(from, size);
     }
 
     @GetMapping("/{catId}")
     @ResponseStatus(HttpStatus.OK)
     public CategoryResponse getCategoryById(@PathVariable(name = "catId") Long categoryId) {
-        log.info("Get category with id={} request", categoryId);
         return categoryService.getCategoryById(categoryId);
     }
 }

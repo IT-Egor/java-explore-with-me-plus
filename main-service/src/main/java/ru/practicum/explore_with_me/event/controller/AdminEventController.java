@@ -32,14 +32,12 @@ public class AdminEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0", required = false) Integer from,
             @RequestParam(defaultValue = "10", required = false) Integer size) {
-        log.info("Get request for all events for criteria");
         return eventService.getAllEventsAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 
     @PatchMapping("/{eventId}")
     @ResponseStatus(HttpStatus.OK)
     public EventFullDto patchEventById(@Valid @RequestBody AdminPatchEventDto adminPatchEventDto, @PathVariable Long eventId) {
-        log.info("Patch request for event by eventId = {}", eventId);
         return eventService.patchEventById(eventId, adminPatchEventDto);
     }
 }

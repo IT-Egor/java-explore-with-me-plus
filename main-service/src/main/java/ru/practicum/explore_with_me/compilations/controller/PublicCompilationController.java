@@ -19,7 +19,6 @@ public class PublicCompilationController {
     @GetMapping("/{compId}")
     @ResponseStatus(HttpStatus.OK)
     public CompilationResponse getCompilationById(@PathVariable(name = "compId") Long compId) {
-        log.info("GET request to get compilation with id {}", compId);
         return compilationService.getCompilationById(compId);
     }
 
@@ -28,7 +27,6 @@ public class PublicCompilationController {
     public Collection<CompilationResponse> getCompilations(@RequestParam(required = false) Boolean pinned,
                                                            @RequestParam(defaultValue = "0") Integer from,
                                                            @RequestParam(defaultValue = "10") Integer size) {
-        log.info("GET request to get compilations");
         return compilationService.getCompilations(pinned, from, size);
     }
 }

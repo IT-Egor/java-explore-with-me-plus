@@ -20,7 +20,7 @@ public class CompilationFinderImpl implements CompilationFinder {
     public Compilation findById(Long compilationId) {
         Optional<Compilation> compilationOpt = compilationRepository.findById(compilationId);
         if (compilationOpt.isPresent()) {
-            log.info("Compilation with id={} found", compilationId);
+            log.info("Compilation with id={} was found", compilationId);
             return compilationOpt.get();
         } else {
             log.warn("Compilation with id={} not found", compilationId);

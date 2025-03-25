@@ -18,24 +18,21 @@ public class AdminCompilationController {
     private final CompilationService compilationService;
 
     @PostMapping
-    @ResponseStatus(code = HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.CREATED)
     public CompilationResponse createCompilation(@Valid @RequestBody CreateCompilationRequest createCompilationRequest) {
-        log.info("Compilation POST request");
         return compilationService.create(createCompilationRequest);
     }
 
     @DeleteMapping("/{compId}")
-    @ResponseStatus(code = HttpStatus.NO_CONTENT)
-    public void deleteCompilation(@PathVariable(name = "compId") long compilationId) {
-        log.info("Compilation id={} DELETE request", compilationId);
-        compilationService.deleteById(compilationId);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCompilation(@PathVariable long compId) {
+        compilationService.deleteById(compId);
     }
 
     @PatchMapping("/{compId}")
-    @ResponseStatus(code = HttpStatus.OK)
-    public CompilationResponse patchCompilation(@PathVariable(name = "compId") Long compilationId,
+    @ResponseStatus(HttpStatus.OK)
+    public CompilationResponse patchCompilation(@PathVariable Long compId,
                                                 @Valid @RequestBody UpdateCompilationRequest updateCompilationRequest) {
-        log.info("Compilation id={} PATCH request", compilationId);
-        return compilationService.update(compilationId, updateCompilationRequest);
+        return compilationService.update(compId, updateCompilationRequest);
     }
 }

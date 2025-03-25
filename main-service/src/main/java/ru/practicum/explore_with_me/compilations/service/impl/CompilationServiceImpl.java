@@ -1,6 +1,5 @@
 package ru.practicum.explore_with_me.compilations.service.impl;
 
-import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -9,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.compilations.dao.CompilationRepository;
-import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
+import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
@@ -31,7 +30,6 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationMapper compilationMapper;
     private final CompilationFinder compilationFinder;
     private final EventFinder eventFinder;
-    private final EntityManager entityManager;
 
     @Override
     public CompilationResponse create(CreateCompilationRequest createCompilationRequest) {
@@ -40,7 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
                 eventFinder.findAllByIdIn(createCompilationRequest.getEvents()));
         CompilationResponse response = compilationMapper.compilationToResponse(compilationRepository.save(compilation));
         log.info("Compilation with id={} was created", response.getId());
-        return compilationMapper.compilationToResponse(compilation);
+        return response;
     }
 
     @Override
@@ -77,8 +75,9 @@ public class CompilationServiceImpl implements CompilationService {
                 updateCompilationRequest,
                 compilation,
         eventFinder.findAllByIdIn(updateCompilationRequest.getEvents()));
-        compilationRepository.save(compilation);
-        log.info("Compilation with id={} was updated", compilation.getId());
-        return compilationMapper.compilationToResponse(compilation);
+        CompilationResponse response = compilationMapper.compilationToResponse(
+                compilationRepository.save(compilation));
+        log.info("Compilation with id={} was updated", response.getId());
+        return response;
     }
 }

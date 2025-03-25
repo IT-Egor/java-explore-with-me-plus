@@ -15,8 +15,6 @@ public class UpdateCompilationRequest {
     @Size(min = 1, max = 50, message = "title length must be between 1 and 50 characters")
     String title;
 
-    @Builder.Default
-    Boolean pinned = false;
-
+    Boolean pinned;
     Set<Long> events;
 }

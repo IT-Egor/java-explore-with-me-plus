@@ -26,20 +26,17 @@ public class PrivateEventController {
     public Collection<EventShortDto> getAllEvents(@PathVariable Long userId,
                                                   @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                                   @Positive @RequestParam(defaultValue = "10") Integer size) {
-        log.info("Get request for all private events for user with id = {}", userId);
         return eventService.getAllEvents(userId, from, size);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto createEvent(@PathVariable Long userId, @Valid @RequestBody NewEventDto newEventDto) {
-        log.info("Post new private event from user with id = {}", userId);
         return eventService.createEvent(userId, newEventDto);
     }
 
     @GetMapping("/{eventId}")
     public EventFullDto getEventById(@PathVariable Long userId, @PathVariable Long eventId) {
-        log.info("Get request for event with id = {}", eventId);
         return eventService.getEventById(userId, eventId);
     }
 
@@ -47,7 +44,6 @@ public class PrivateEventController {
     public EventFullDto updateEvent(@PathVariable Long userId,
                                     @PathVariable Long eventId,
                                     @Valid @RequestBody UpdateEventUserRequest updateRequest) {
-        log.info("Patch event with id = {} from user with id = {}", eventId, userId);
         return eventService.updateEvent(userId, eventId, updateRequest);
     }
 }

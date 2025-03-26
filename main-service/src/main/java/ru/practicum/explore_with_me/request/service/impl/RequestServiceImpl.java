@@ -65,7 +65,7 @@ public class RequestServiceImpl implements RequestService {
             status = RequestStatus.CONFIRMED;
         }
 
-        if (event.getInitiator().getId() == user.getId()) {
+        if (event.getInitiator().getId().equals(user.getId())) {
             throw new InitiatorRequestException("Initiator can't submit a request for event");
         }
 

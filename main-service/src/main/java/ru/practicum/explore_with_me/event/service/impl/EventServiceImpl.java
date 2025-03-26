@@ -52,6 +52,20 @@ public class EventServiceImpl implements EventService {
     private final UserFinder userFinder;
     private final EntityManager entityManager;
 
+    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+        return updateStateAction;
+    }
+
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
         int pageNumber = from / size;
@@ -195,7 +209,7 @@ public class EventServiceImpl implements EventService {
         List<GetResponse> getResponses = loadViewInStatistic(event.getPublishedOn(), LocalDateTime.now(), List.of("/events/" + eventId), true);
         if (!getResponses.isEmpty()) {
             GetResponse getResponse = getResponses.getFirst();
-            event.setViews(getResponse.getHits());
+            event.setViews((int) getResponse.getHits());
             eventRepository.save(event);
         }
         return eventMapper.toFullDto(event);
@@ -220,20 +234,6 @@ public class EventServiceImpl implements EventService {
         eventMapper.updateUserRequest(updateRequest, event);
         log.info("Update event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
-    }
-
-    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
-        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
-
-        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
-        }
-
-        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
-                && event.getState().equals(EventState.PUBLISHED)) {
-            throw new PublicationException("Cannot reject a published event");
-        }
-        return updateStateAction;
     }
 
     private void stateChanger(Event event, EventStateAction stateAction) {

@@ -5,11 +5,9 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
-import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.user.model.User;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Setter
@@ -52,7 +50,7 @@ public class Event {
     Integer participantLimit;
     Boolean requestModeration;
     LocalDateTime createdOn;
-    Long confirmedRequests;
+    Integer confirmedRequests = 0;
     LocalDateTime publishedOn;
-    Long views;
+    Integer views = 0;
 }

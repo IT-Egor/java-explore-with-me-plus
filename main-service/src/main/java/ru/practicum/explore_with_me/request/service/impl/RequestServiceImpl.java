@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.category.model.RequestStatus;
 import ru.practicum.explore_with_me.error.model.*;
+import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
@@ -31,7 +32,9 @@ public class RequestServiceImpl implements RequestService {
     final RequestRepository requestRepository;
     final UserFinder userFinder;
     final EventFinder eventFinder;
-    private final RequestMapper requestMapper;
+    final RequestMapper requestMapper;
+    final EventRepository eventRepository;
+
 
     @Override
     public Collection<RequestDto> getAllUserRequest(Long userId) {
@@ -54,12 +57,12 @@ public class RequestServiceImpl implements RequestService {
             throw new NotPublishedEventRequestException("Event must be published");
         }
 
-        if (event.getParticipantLimit() != 0 && event.getParticipantLimit() >= event.getConfirmedRequests()) {
+        if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
             throw new RequestLimitException("No more seats for the event");
         }
 
         if (event.getParticipantLimit() == 0) {
-            status = RequestStatus.APPROVE;
+            status = RequestStatus.CONFIRMED;
         }
 
         if (event.getInitiator().getId() == user.getId()) {
@@ -72,6 +75,10 @@ public class RequestServiceImpl implements RequestService {
                 .event(event)
                 .status(status)
                 .build();
+        if (request.getStatus().equals(RequestStatus.CONFIRMED)) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            eventRepository.save(event);
+        }
         return requestMapper.toRequestDto(requestRepository.save(request));
     }
 

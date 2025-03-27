@@ -37,6 +37,10 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Collection<GetResponse> getStatistics(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Start date should not be after end date");
+        }
+
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Tuple> query = cb.createTupleQuery();
         Root<Hit> hit = query.from(Hit.class);

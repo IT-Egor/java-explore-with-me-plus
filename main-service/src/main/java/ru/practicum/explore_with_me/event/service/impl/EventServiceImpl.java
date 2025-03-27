@@ -100,14 +100,16 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.stateIn(states))
                 .and(EventFindSpecification.categoryIn(categories))
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
-                .and(EventFindSpecification.eventDateBefore(rangeEnd))
-                .and(EventFindSpecification.onlyPublished());
+                .and(EventFindSpecification.eventDateBefore(rangeEnd));
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
         return page.stream()
+                .peek(event -> event.setConfirmedRequests(
+                        requestRepository.findAllByEventIdAndStatus(event.getId(),RequestStatus.CONFIRMED).size())
+                )
                 .map(eventMapper::toFullDto)
                 .toList();
     }
@@ -138,7 +140,8 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
                 .and(EventFindSpecification.eventDateBefore(rangeEnd))
                 .and(EventFindSpecification.isAvailable(onlyAvailable))
-                .and(EventFindSpecification.sortBySortType(sort));
+                .and(EventFindSpecification.sortBySortType(sort))
+                .and(EventFindSpecification.onlyPublished());
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
@@ -216,10 +219,9 @@ public class EventServiceImpl implements EventService {
         List<GetResponse> getResponses = loadViewInStatistic(event.getPublishedOn(), LocalDateTime.now(), List.of("/events/" + eventId), true);
         if (!getResponses.isEmpty()) {
             GetResponse getResponse = getResponses.getFirst();
-            event.setViews((int) getResponse.getHits());
-            eventRepository.save(event);
+            event.setViews(getResponse.getHits());
         }
-        return eventMapper.toFullDto(event);
+        return eventMapper.toFullDto(eventRepository.save(event));
     }
 
     @Override

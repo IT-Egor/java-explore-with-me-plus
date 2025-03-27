@@ -41,7 +41,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         CriteriaQuery<Tuple> query = cb.createTupleQuery();
         Root<Hit> hit = query.from(Hit.class);
 
-        Predicate whereClause = cb.between(hit.get("timestamp"), start.minusNanos(1), end.plusNanos(1));
+        Predicate whereClause = cb.between(hit.get("timestamp"), start.minusMinutes(1), end.plusMinutes(1));
 
         if (uris != null && !uris.isEmpty()) {
             whereClause = cb.and(whereClause, hit.get("uri").in(uris));

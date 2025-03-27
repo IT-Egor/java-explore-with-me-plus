@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.error.model.*;
-import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
@@ -33,13 +32,13 @@ public class RequestServiceImpl implements RequestService {
     final UserFinder userFinder;
     final EventFinder eventFinder;
     final RequestMapper requestMapper;
-    final EventRepository eventRepository;
 
 
     @Override
     public Collection<RequestDto> getAllUserRequest(Long userId) {
         userFinder.getUserById(userId);
         Set<Request> requests = requestRepository.findAllByRequesterId(userId);
+        log.info("GET requests by userId = {}",userId);
         return requests.stream().map(requestMapper::toRequestDto).toList();
     }
 
@@ -77,10 +76,7 @@ public class RequestServiceImpl implements RequestService {
                 .event(event)
                 .status(status)
                 .build();
-        if (request.getStatus().equals(RequestStatus.CONFIRMED)) {
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            eventRepository.save(event);
-        }
+        log.info("POST request body = {}",request);
         return requestMapper.toRequestDto(requestRepository.save(request));
     }
 
@@ -90,6 +86,7 @@ public class RequestServiceImpl implements RequestService {
         Request request = requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException("Request not found"));
         request.setStatus(RequestStatus.CANCELED);
+        log.info("Cancel request by requestId = {} and userId = {}",requestId,userId);
         return requestMapper.toRequestDto(requestRepository.save(request));
     }
 }

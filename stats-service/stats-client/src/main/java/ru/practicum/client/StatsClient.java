@@ -19,6 +19,7 @@ import java.util.List;
 public class StatsClient {
 
     private static final RestClient restClient = RestClient.create();
+//    private static final String STATS_SERVER_URI = "http://stats-server:9090";
     private static final String STATS_SERVER_URI = "http://localhost:9090";
 
     public static void hit(HitRequest hitRequest) {

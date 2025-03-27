@@ -19,21 +19,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
-import ru.practicum.explore_with_me.error.model.AlreadyConfirmedException;
-import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
-import ru.practicum.explore_with_me.error.model.GetPublicEventException;
-import ru.practicum.explore_with_me.error.model.NotFoundException;
-import ru.practicum.explore_with_me.error.model.PublicationException;
-import ru.practicum.explore_with_me.error.model.TooManyRequestsException;
-import ru.practicum.explore_with_me.error.model.UpdateStartDateException;
+import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
-import ru.practicum.explore_with_me.event.dto.AdminPatchEventDto;
-import ru.practicum.explore_with_me.event.dto.EventFullDto;
-import ru.practicum.explore_with_me.event.dto.EventRequestStatusUpdateRequest;
-import ru.practicum.explore_with_me.event.dto.EventRequestStatusUpdateResult;
-import ru.practicum.explore_with_me.event.dto.EventShortDto;
-import ru.practicum.explore_with_me.event.dto.NewEventDto;
-import ru.practicum.explore_with_me.event.dto.UpdateEventUserRequest;
+import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.Location;
@@ -52,11 +40,8 @@ import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -84,9 +69,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Collection<EventFullDto> getAllEventsAdmin(Set<Long> users, Set<String> states, Set<Long> categories,
-                                                      LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
-                                                      Integer size) {
+    public Collection<EventFullDto> getAllEventsAdmin(GetAllEventsAdminParams params) {
+        Set<Long> users = params.getUsers();
+        Set<String> states = params.getStates();
+        Set<Long> categories = params.getCategories();
+        LocalDateTime rangeStart = params.getRangeStart();
+        LocalDateTime rangeEnd = params.getRangeEnd();
+        Integer from = params.getFrom();
+        Integer size = params.getSize();
+
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
@@ -106,19 +97,35 @@ public class EventServiceImpl implements EventService {
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
+        List<Request> confirmedRequestsByEventId = requestRepository.findAllByEventIdInAndStatus(
+                page.stream().map(Event::getId).toList(), RequestStatus.CONFIRMED);
+
+        Map<Long, List<Request>> eventIdToConfirmedRequests = confirmedRequestsByEventId.stream()
+                .collect(Collectors.groupingBy(request -> request.getEvent().getId()));
+
         return page.stream()
                 .peek(event -> event.setConfirmedRequests(
-                        requestRepository.findAllByEventIdAndStatus(event.getId(),RequestStatus.CONFIRMED).size())
+                        eventIdToConfirmedRequests.getOrDefault(
+                                event.getId(),
+                                Collections.emptyList()).size())
                 )
                 .map(eventMapper::toFullDto)
                 .toList();
     }
 
     @Override
-    public Collection<EventShortDto> getAllEventsPublic(String text, Set<Long> categories, Boolean paid,
-                                                        LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                        Boolean onlyAvailable, SortType sort, Integer from,
-                                                        Integer size, HttpServletRequest httpServletRequest) {
+    public Collection<EventShortDto> getAllEventsPublic(GetAllEventsPublicParams params) {
+        String text = params.getText();
+        Set<Long> categories = params.getCategories();
+        Boolean paid = params.getPaid();
+        LocalDateTime rangeStart = params.getRangeStart();
+        LocalDateTime rangeEnd = params.getRangeEnd();
+        Boolean onlyAvailable = params.getOnlyAvailable();
+        SortType sort = params.getSort();
+        Integer from = params.getFrom();
+        Integer size = params.getSize();
+        HttpServletRequest httpServletRequest = params.getHttpServletRequest();
+
         Pageable pageable = PageRequest.of(from / size, size);
 
         if (rangeStart == null) {

@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.explore_with_me.category.model.RequestStatus;
+import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
@@ -57,7 +57,9 @@ public class RequestServiceImpl implements RequestService {
             throw new NotPublishedEventRequestException("Event must be published");
         }
 
-        if (event.getParticipantLimit() != 0 && event.getConfirmedRequests() >= event.getParticipantLimit()) {
+        int requestsSize = requestRepository.findAllByEventId(eventId).size();
+
+        if (event.getParticipantLimit() != 0 && requestsSize >= event.getParticipantLimit()) {
             throw new RequestLimitException("No more seats for the event");
         }
 
@@ -87,7 +89,7 @@ public class RequestServiceImpl implements RequestService {
         userFinder.getUserById(userId);
         Request request = requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException("Request not found"));
-        request.setStatus(RequestStatus.CANCEL);
+        request.setStatus(RequestStatus.CANCELED);
         return requestMapper.toRequestDto(requestRepository.save(request));
     }
 }

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 
 import java.time.LocalDateTime;
 
@@ -19,5 +20,5 @@ public class RequestDto {
     Long event;
     Long id;
     Long requester;
-    String status;
+    RequestStatus status;
 }

@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.event.service;
 import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.model.enums.SortType;
+import ru.practicum.explore_with_me.request.dto.RequestDto;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -35,4 +36,8 @@ public interface EventService {
     EventFullDto getEventByIdPublic(Long eventId, HttpServletRequest httpServletRequest);
 
     EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest);
+
+    Collection<RequestDto> getRequests(Long userId, Long eventId);
+
+    EventRequestStatusUpdateResult updateRequest(Long userId, Long eventId, EventRequestStatusUpdateRequest updateRequest);
 }

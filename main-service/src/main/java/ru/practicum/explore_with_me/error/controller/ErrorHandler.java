@@ -225,4 +225,30 @@ public class ErrorHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.toString())
                 .build();
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleTooManyRequestsException(TooManyRequestsException e) {
+        String reasonMessage = "Too many requests";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleAlreadyConfirmedException(AlreadyConfirmedException e) {
+        String reasonMessage = "Request already confirmed";
+        log.error("CONFLICT: {}", reasonMessage, e);
+        return ErrorResponse.builder()
+                .errors(List.of(e.getMessage()))
+                .message(e.getMessage())
+                .reason(reasonMessage)
+                .status(HttpStatus.CONFLICT.toString())
+                .build();
+    }
 }

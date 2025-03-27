@@ -56,6 +56,7 @@ public class EventServiceImpl implements EventService {
     final LocationFinder locationFinder;
     final UserFinder userFinder;
     final EntityManager entityManager;
+    final StatsClient statsClient;
 
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
@@ -104,12 +105,12 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.groupingBy(request -> request.getEvent().getId()));
 
         return page.stream()
-                .peek(event -> event.setConfirmedRequests(
-                        eventIdToConfirmedRequests.getOrDefault(
-                                event.getId(),
-                                Collections.emptyList()).size())
-                )
-                .map(eventMapper::toFullDto)
+                .map(event -> {
+                   event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
+                           event.getId(),
+                           Collections.emptyList()).size());
+                   return eventMapper.toFullDto(event);
+                })
                 .toList();
     }
 
@@ -334,11 +335,11 @@ public class EventServiceImpl implements EventService {
                 .uri(uri)
                 .ip(ip)
                 .build();
-        StatsClient.hit(hitRequest);
+        statsClient.hit(hitRequest);
     }
 
     private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        return StatsClient.getStats(start, end, uris, unique);
+        return statsClient.getStats(start, end, uris, unique);
     }
 
     private EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {

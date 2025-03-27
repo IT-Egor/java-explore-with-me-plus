@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
@@ -14,18 +15,19 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @RequiredArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class HitRequest {
     @NotBlank
-    private final String app;
+    final String app;
 
     @NotBlank
-    private final String uri;
+    final String uri;
 
     @NotBlank
-    private final String ip;
+    final String ip;
 
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Builder.Default
-    private final LocalDateTime timestamp = LocalDateTime.now();
+    final LocalDateTime timestamp = LocalDateTime.now();
 }

@@ -5,17 +5,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 @Builder(toBuilder = true)
 @Getter
 @Setter
 @RequiredArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class GetResponse {
     @NotBlank
-    private final String app;
+    final String app;
 
     @NotBlank
-    private final String uri;
+    final String uri;
 
-    private final long hits;
+    final long hits;
 }

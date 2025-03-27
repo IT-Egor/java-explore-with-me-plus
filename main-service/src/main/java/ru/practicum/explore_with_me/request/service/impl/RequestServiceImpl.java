@@ -1,11 +1,8 @@
 package ru.practicum.explore_with_me.request.service.impl;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
@@ -14,6 +11,7 @@ import ru.practicum.explore_with_me.request.dao.RequestRepository;
 import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
 import ru.practicum.explore_with_me.request.model.Request;
+import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.request.service.RequestService;
 import ru.practicum.explore_with_me.user.model.User;
 import ru.practicum.explore_with_me.user.utils.UserFinder;
@@ -26,13 +24,11 @@ import java.util.Set;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class RequestServiceImpl implements RequestService {
-    final RequestRepository requestRepository;
-    final UserFinder userFinder;
-    final EventFinder eventFinder;
-    final RequestMapper requestMapper;
-
+    private final RequestRepository requestRepository;
+    private final UserFinder userFinder;
+    private final EventFinder eventFinder;
+    private final RequestMapper requestMapper;
 
     @Override
     public Collection<RequestDto> getAllUserRequest(Long userId) {

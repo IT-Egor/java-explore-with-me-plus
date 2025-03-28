@@ -3,29 +3,28 @@ package dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
-@Builder(toBuilder = true)
-@Getter
-@Setter
-@RequiredArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class HitRequest {
     @NotBlank
-    private final String app;
+    String app;
 
     @NotBlank
-    private final String uri;
+    String uri;
 
     @NotBlank
-    private final String ip;
+    String ip;
 
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Builder.Default
-    private final LocalDateTime timestamp = LocalDateTime.now();
+    LocalDateTime timestamp = LocalDateTime.now();
 }

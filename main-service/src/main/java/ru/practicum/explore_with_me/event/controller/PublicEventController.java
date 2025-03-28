@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
 import ru.practicum.explore_with_me.event.dto.EventShortDto;
+import ru.practicum.explore_with_me.event.dto.GetAllEventsPublicParams;
 import ru.practicum.explore_with_me.event.model.enums.SortType;
 import ru.practicum.explore_with_me.event.service.EventService;
 
@@ -36,8 +37,18 @@ public class PublicEventController {
             @RequestParam(defaultValue = "0") Integer from,
             @RequestParam(defaultValue = "10") Integer size,
             HttpServletRequest httpServletRequest) {
-        return eventService.getAllEventsPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
-                from, size, httpServletRequest);
+        return eventService.getAllEventsPublic(GetAllEventsPublicParams.builder()
+                .text(text)
+                .categories(categories)
+                .paid(paid)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .onlyAvailable(onlyAvailable)
+                .sort(sort)
+                .from(from)
+                .size(size)
+                .httpServletRequest(httpServletRequest)
+                .build());
     }
 
     @GetMapping("/{eventId}")

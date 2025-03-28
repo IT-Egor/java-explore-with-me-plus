@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.event.dto.AdminPatchEventDto;
 import ru.practicum.explore_with_me.event.dto.EventFullDto;
+import ru.practicum.explore_with_me.event.dto.GetAllEventsAdminParams;
 import ru.practicum.explore_with_me.event.service.EventService;
 
 import java.time.LocalDateTime;
@@ -32,7 +33,15 @@ public class AdminEventController {
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0", required = false) Integer from,
             @RequestParam(defaultValue = "10", required = false) Integer size) {
-        return eventService.getAllEventsAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+        return eventService.getAllEventsAdmin(GetAllEventsAdminParams.builder()
+                .users(users)
+                .states(states)
+                .categories(categories)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .from(from)
+                .size(size)
+                .build());
     }
 
     @PatchMapping("/{eventId}")

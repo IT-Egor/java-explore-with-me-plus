@@ -8,7 +8,9 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ValidationException;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,10 +19,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
-import ru.practicum.explore_with_me.error.model.AlreadyPublishedException;
-import ru.practicum.explore_with_me.error.model.GetPublicEventException;
-import ru.practicum.explore_with_me.error.model.PublicationException;
-import ru.practicum.explore_with_me.error.model.UpdateStartDateException;
+import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
@@ -33,24 +32,31 @@ import ru.practicum.explore_with_me.event.service.EventService;
 import ru.practicum.explore_with_me.event.utils.EventFinder;
 import ru.practicum.explore_with_me.event.utils.LocationFinder;
 import ru.practicum.explore_with_me.event.utils.specification.EventFindSpecification;
+import ru.practicum.explore_with_me.request.dao.RequestRepository;
+import ru.practicum.explore_with_me.request.dto.RequestDto;
+import ru.practicum.explore_with_me.request.mapper.RequestMapper;
+import ru.practicum.explore_with_me.request.model.Request;
+import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventServiceImpl implements EventService {
-    private final EventRepository eventRepository;
-    private final EventMapper eventMapper;
-    private final EventFinder eventFinder;
-    private final LocationFinder locationFinder;
-    private final UserFinder userFinder;
-    private final EntityManager entityManager;
+    final EventRepository eventRepository;
+    final RequestRepository requestRepository;
+    final EventMapper eventMapper;
+    final RequestMapper requestMapper;
+    final EventFinder eventFinder;
+    final LocationFinder locationFinder;
+    final UserFinder userFinder;
+    final EntityManager entityManager;
+    final StatsClient statsClient;
 
     @Override
     public Collection<EventShortDto> getAllEvents(Long userId, Integer from, Integer size) {
@@ -63,9 +69,16 @@ public class EventServiceImpl implements EventService {
         return page.getContent().stream().map(eventMapper::toShortDto).toList();
     }
 
-    public Collection<EventFullDto> getAllEventsAdmin(Set<Long> users, Set<String> states, Set<Long> categories,
-                                                      LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from,
-                                                      Integer size) {
+    @Override
+    public Collection<EventFullDto> getAllEventsAdmin(GetAllEventsAdminParams params) {
+        Set<Long> users = params.getUsers();
+        Set<String> states = params.getStates();
+        Set<Long> categories = params.getCategories();
+        LocalDateTime rangeStart = params.getRangeStart();
+        LocalDateTime rangeEnd = params.getRangeEnd();
+        Integer from = params.getFrom();
+        Integer size = params.getSize();
+
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
@@ -79,23 +92,41 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.stateIn(states))
                 .and(EventFindSpecification.categoryIn(categories))
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
-                .and(EventFindSpecification.eventDateBefore(rangeEnd))
-                .and(EventFindSpecification.onlyPublished());
+                .and(EventFindSpecification.eventDateBefore(rangeEnd));
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
+        List<Request> confirmedRequestsByEventId = requestRepository.findAllByEventIdInAndStatus(
+                page.stream().map(Event::getId).toList(), RequestStatus.CONFIRMED);
+
+        Map<Long, List<Request>> eventIdToConfirmedRequests = confirmedRequestsByEventId.stream()
+                .collect(Collectors.groupingBy(request -> request.getEvent().getId()));
+
         return page.stream()
-                .map(eventMapper::toFullDto)
+                .map(event -> {
+                   event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
+                           event.getId(),
+                           Collections.emptyList()).size());
+                   return eventMapper.toFullDto(event);
+                })
                 .toList();
     }
 
     @Override
-    public Collection<EventShortDto> getAllEventsPublic(String text, Set<Long> categories, Boolean paid,
-                                                        LocalDateTime rangeStart, LocalDateTime rangeEnd,
-                                                        Boolean onlyAvailable, SortType sort, Integer from,
-                                                        Integer size, HttpServletRequest httpServletRequest) {
+    public Collection<EventShortDto> getAllEventsPublic(GetAllEventsPublicParams params) {
+        String text = params.getText();
+        Set<Long> categories = params.getCategories();
+        Boolean paid = params.getPaid();
+        LocalDateTime rangeStart = params.getRangeStart();
+        LocalDateTime rangeEnd = params.getRangeEnd();
+        Boolean onlyAvailable = params.getOnlyAvailable();
+        SortType sort = params.getSort();
+        Integer from = params.getFrom();
+        Integer size = params.getSize();
+        HttpServletRequest httpServletRequest = params.getHttpServletRequest();
+
         Pageable pageable = PageRequest.of(from / size, size);
 
         if (rangeStart == null) {
@@ -117,7 +148,8 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
                 .and(EventFindSpecification.eventDateBefore(rangeEnd))
                 .and(EventFindSpecification.isAvailable(onlyAvailable))
-                .and(EventFindSpecification.sortBySortType(sort));
+                .and(EventFindSpecification.sortBySortType(sort))
+                .and(EventFindSpecification.onlyPublished());
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
@@ -192,13 +224,17 @@ public class EventServiceImpl implements EventService {
         }
 
         saveViewInStatistic("/events/" + eventId, httpServletRequest.getRemoteAddr());
-        List<GetResponse> getResponses = loadViewInStatistic(event.getPublishedOn(), LocalDateTime.now(), List.of("/events/" + eventId), true);
+
+        List<GetResponse> getResponses = loadViewFromStatistic(
+                event.getPublishedOn(),
+                LocalDateTime.now(),
+                List.of("/events/" + eventId),
+                true);
         if (!getResponses.isEmpty()) {
             GetResponse getResponse = getResponses.getFirst();
             event.setViews(getResponse.getHits());
-            eventRepository.save(event);
         }
-        return eventMapper.toFullDto(event);
+        return eventMapper.toFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -222,18 +258,69 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toFullDto(eventRepository.save(event));
     }
 
-    private static EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
-        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+    @Override
+    public Collection<RequestDto> getRequests(Long userId, Long eventId) {
+        userFinder.getUserById(userId);
+        Event event = eventFinder.findById(eventId);
 
-        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
-            throw new PublicationException("The event can only be published during the pending stage");
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("The event initiator does not match the user id");
         }
 
-        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
-                && event.getState().equals(EventState.PUBLISHED)) {
-            throw new PublicationException("Cannot reject a published event");
+        Set<Request> requests = requestRepository.findAllByEventId(eventId);
+
+        return requests.stream().map(requestMapper::toRequestDto).toList();
+    }
+
+    @Override
+    @Transactional
+    public EventRequestStatusUpdateResult updateRequest(Long userId, Long eventId,
+                                                        EventRequestStatusUpdateRequest updateRequest) {
+        userFinder.getUserById(userId);
+        Event event = eventFinder.findById(eventId);
+
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("The event initiator does not match the user id");
         }
-        return updateStateAction;
+
+        List<Request> requests = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
+
+        for (Request request : requests) {
+            if (!request.getEvent().getId().equals(eventId)) {
+                throw new NotFoundException("Request with requestId = " + request.getId() + "does not match eventId = " + eventId);
+            }
+        }
+
+        int confirmedCount = requestRepository.findAllByEventIdAndStatus(eventId, RequestStatus.CONFIRMED).size();
+        int size = updateRequest.getRequestIds().size();
+        int confirmedSize = updateRequest.getStatus().equals(RequestStatus.CONFIRMED) ? size : 0;
+
+        if (event.getParticipantLimit() != 0 && confirmedCount + confirmedSize > event.getParticipantLimit()) {
+            throw new TooManyRequestsException("Event limit exceed");
+        }
+
+        List<RequestDto> confirmedRequests = new ArrayList<>();
+        List<RequestDto> rejectedRequests = new ArrayList<>();
+
+        for (Request request : requests) {
+            if (updateRequest.getStatus().equals(RequestStatus.CONFIRMED)) {
+                request.setStatus(RequestStatus.CONFIRMED);
+                confirmedRequests.add(requestMapper.toRequestDto(request));
+            } else if (updateRequest.getStatus().equals(RequestStatus.REJECTED)) {
+                if (request.getStatus().equals(RequestStatus.CONFIRMED)) {
+                    throw new AlreadyConfirmedException("The request cannot be rejected if it is confirmed");
+                }
+                request.setStatus(RequestStatus.REJECTED);
+                rejectedRequests.add(requestMapper.toRequestDto(request));
+            }
+        }
+
+        requestRepository.saveAll(requests);
+
+        return EventRequestStatusUpdateResult.builder()
+                .confirmedRequests(confirmedRequests)
+                .rejectedRequests(rejectedRequests)
+                .build();
     }
 
     private void stateChanger(Event event, EventStateAction stateAction) {
@@ -253,10 +340,24 @@ public class EventServiceImpl implements EventService {
                 .uri(uri)
                 .ip(ip)
                 .build();
-        StatsClient.hit(hitRequest);
+        statsClient.hit(hitRequest);
     }
 
-    private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        return StatsClient.getStats(start, end, uris, unique);
+    private List<GetResponse> loadViewFromStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+        return statsClient.getStats(start, end, uris, unique);
+    }
+
+    private EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
+        EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
+
+        if (updateStateAction != null && !event.getState().equals(EventState.PENDING) && updateStateAction.equals(EventStateAction.PUBLISH_EVENT)) {
+            throw new PublicationException("The event can only be published during the pending stage");
+        }
+
+        if (updateStateAction != null && updateStateAction.equals(EventStateAction.REJECT_EVENT)
+                && event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Cannot reject a published event");
+        }
+        return updateStateAction;
     }
 }

@@ -50,7 +50,7 @@ public class Event {
     Integer participantLimit;
     Boolean requestModeration;
     LocalDateTime createdOn;
-    Long confirmedRequests;
+    Integer confirmedRequests;
     LocalDateTime publishedOn;
     Long views;
 }

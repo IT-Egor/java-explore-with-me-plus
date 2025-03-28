@@ -1,21 +1,23 @@
 package dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
-@Builder(toBuilder = true)
-@Getter
-@Setter
-@RequiredArgsConstructor
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class GetResponse {
     @NotBlank
-    private final String app;
+    String app;
 
     @NotBlank
-    private final String uri;
+    String uri;
 
-    private final long hits;
+    long hits;
 }

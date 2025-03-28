@@ -1,19 +1,19 @@
 package ru.practicum.expore_with_me.service.impl;
 
-import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import dto.GetResponse;
 import dto.HitRequest;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.expore_with_me.dao.HitRepository;
 import ru.practicum.expore_with_me.mapper.HitMapper;
 import ru.practicum.expore_with_me.model.Hit;
-import ru.practicum.expore_with_me.model.QHit;
 import ru.practicum.expore_with_me.service.StatisticsService;
 
 import java.time.LocalDateTime;
@@ -37,36 +37,46 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public Collection<GetResponse> getStatistics(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        QHit qHit = QHit.hit;
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("Start date should not be after end date");
+        }
 
-        BooleanExpression whereClause = qHit.timestamp.between(start, end);
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> query = cb.createTupleQuery();
+        Root<Hit> hit = query.from(Hit.class);
+
+        Predicate whereClause = cb.between(hit.get("timestamp"), start.minusNanos(start.getNano()), end);
 
         if (uris != null && !uris.isEmpty()) {
-            whereClause = whereClause.and(qHit.uri.in(uris));
+            whereClause = cb.and(whereClause, hit.get("uri").in(uris));
         }
-
-        JPAQueryFactory queryFactory = new JPAQueryFactory(entityManager);
-        JPAQuery<Tuple> query;
 
         if (unique) {
-            query = queryFactory.select(qHit.ip.countDistinct(), qHit.app, qHit.uri);
+            query.multiselect(
+                    cb.countDistinct(hit.get("ip")),
+                    hit.get("app"),
+                    hit.get("uri")
+            );
         } else {
-            query = queryFactory.select(qHit.ip.count(), qHit.app, qHit.uri);
+            query.multiselect(
+                    cb.count(hit.get("ip")),
+                    hit.get("app"),
+                    hit.get("uri")
+            );
         }
 
-        query = query.from(qHit)
-                .where(whereClause)
-                .groupBy(qHit.app, qHit.uri)
-                .orderBy(qHit.ip.count().desc());
+        query.where(whereClause)
+                .groupBy(hit.get("app"), hit.get("uri"))
+                .orderBy(cb.desc(cb.count(hit.get("ip"))));
 
-        List<Tuple> tuples = query.fetch();
+        List<Tuple> tuples = entityManager.createQuery(query).getResultList();
 
         log.info("Returned list of getResponses");
         return tuples.stream().map(tuple ->
                 GetResponse.builder()
-                        .hits(tuple.get(0, Long.class).longValue())
-                        .app(tuple.get(qHit.app))
-                        .uri(tuple.get(qHit.uri))
+                        .hits(tuple.get(0, Long.class))
+                        .app(tuple.get(1, String.class))
+                        .uri(tuple.get(2, String.class))
                         .build()
         ).toList();
     }

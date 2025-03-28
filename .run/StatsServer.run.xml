@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="StatsServer" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <module name="stats-server" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="ru.practicum.expore_with_me.StatsServer" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
-</component>

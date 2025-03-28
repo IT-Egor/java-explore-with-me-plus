@@ -224,7 +224,12 @@ public class EventServiceImpl implements EventService {
         }
 
         saveViewInStatistic("/events/" + eventId, httpServletRequest.getRemoteAddr());
-        List<GetResponse> getResponses = loadViewInStatistic(event.getPublishedOn(), LocalDateTime.now(), List.of("/events/" + eventId), true);
+
+        List<GetResponse> getResponses = loadViewFromStatistic(
+                event.getPublishedOn(),
+                LocalDateTime.now(),
+                List.of("/events/" + eventId),
+                true);
         if (!getResponses.isEmpty()) {
             GetResponse getResponse = getResponses.getFirst();
             event.setViews(getResponse.getHits());
@@ -338,7 +343,7 @@ public class EventServiceImpl implements EventService {
         statsClient.hit(hitRequest);
     }
 
-    private List<GetResponse> loadViewInStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+    private List<GetResponse> loadViewFromStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         return statsClient.getStats(start, end, uris, unique);
     }
 

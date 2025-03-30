@@ -30,7 +30,7 @@ import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.event.model.enums.EventStateAction;
 import ru.practicum.explore_with_me.event.model.enums.SortType;
 import ru.practicum.explore_with_me.event.service.EventService;
-import ru.practicum.explore_with_me.event.utils.specification.EventFindSpecification;
+import ru.practicum.explore_with_me.event.specification.EventFindSpecification;
 import ru.practicum.explore_with_me.request.dao.RequestRepository;
 import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
@@ -109,10 +109,10 @@ public class EventServiceImpl implements EventService {
 
         return page.stream()
                 .map(event -> {
-                   event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
-                           event.getId(),
-                           Collections.emptyList()).size());
-                   return eventMapper.toFullDto(event);
+                    event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
+                            event.getId(),
+                            Collections.emptyList()).size());
+                    return eventMapper.toFullDto(event);
                 })
                 .toList();
     }
@@ -353,45 +353,45 @@ public class EventServiceImpl implements EventService {
         return statsClient.getStats(start, end, uris, unique);
     }
 
-    private void addViewsInEventsPage(Page<Event> page){
-        if (page == null || page.isEmpty()){
+    private void addViewsInEventsPage(Page<Event> page) {
+        if (page == null || page.isEmpty()) {
             return;
         }
         LocalDateTime earlyPublishedDate = null;
         List<String> uris = new ArrayList<>();
-        for (Event event : page){
-            if (event.getPublishedOn() != null){
-                uris.add("/events/"+event.getId());
-                if (earlyPublishedDate == null || event.getPublishedOn().isAfter(earlyPublishedDate)){
+        for (Event event : page) {
+            if (event.getPublishedOn() != null) {
+                uris.add("/events/" + event.getId());
+                if (earlyPublishedDate == null || event.getPublishedOn().isBefore(earlyPublishedDate)) {
                     earlyPublishedDate = event.getPublishedOn();
                 }
             }
         }
 
-        if (earlyPublishedDate == null){
+        if (earlyPublishedDate == null) {
             return;
         }
 
-        List<GetResponse> response = loadViewFromStatistic(earlyPublishedDate,LocalDateTime.now(),uris,true);
+        List<GetResponse> response = loadViewFromStatistic(earlyPublishedDate, LocalDateTime.now(), uris, true);
 
         if (response == null || response.isEmpty()) {
             return;
         }
 
-        Map<Long,Long> hitsById = response.stream()
+        Map<Long, Long> hitsById = response.stream()
                 .collect(
                         Collectors.toMap(
-                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/"+1))),
+                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/" + 1))),
                                 GetResponse::getHits
                         )
                 );
 
-        for (Event event : page){
+        for (Event event : page) {
             event.setViews(hitsById.getOrDefault(event.getId(), 0L));
         }
     }
 
-    private void addViewsInEvent(Event event){
+    private void addViewsInEvent(Event event) {
         List<GetResponse> getResponses = loadViewFromStatistic(
                 event.getPublishedOn(),
                 LocalDateTime.now(),

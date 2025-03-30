@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.compilations.utils.specification;
+package ru.practicum.explore_with_me.compilations.specification;
 
 import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.explore_with_me.compilations.model.Compilation;

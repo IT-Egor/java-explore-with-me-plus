@@ -15,7 +15,7 @@ import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
-import ru.practicum.explore_with_me.compilations.utils.specification.CompilationFindSpecification;
+import ru.practicum.explore_with_me.compilations.specification.CompilationFindSpecification;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import java.util.Collection;

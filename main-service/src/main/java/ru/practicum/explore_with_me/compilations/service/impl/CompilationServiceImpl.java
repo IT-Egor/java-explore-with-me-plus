@@ -15,11 +15,10 @@ import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
 import ru.practicum.explore_with_me.compilations.utils.CompilationFinder;
+import ru.practicum.explore_with_me.compilations.utils.specification.CompilationFindSpecification;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 
 import java.util.Collection;
-
-import static ru.practicum.explore_with_me.compilations.dao.CompilationRepository.CompilationSpecification.byPinned;
 
 
 @Slf4j
@@ -53,7 +52,7 @@ public class CompilationServiceImpl implements CompilationService {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
-        Specification<Compilation> specification = Specification.where(byPinned(pinned));
+        Specification<Compilation> specification = Specification.where(CompilationFindSpecification.byPinned(pinned));
         Page<Compilation> page = compilationRepository.findAll(specification, pageable);
 
         log.info("Get compilations with {from, size, pinned}={},{},{}", from, size, pinned);

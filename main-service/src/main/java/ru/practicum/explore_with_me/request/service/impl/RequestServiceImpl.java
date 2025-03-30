@@ -13,8 +13,8 @@ import ru.practicum.explore_with_me.request.mapper.RequestMapper;
 import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.request.service.RequestService;
+import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.model.User;
-import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -26,13 +26,14 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
-    private final UserFinder userFinder;
+    private final UserRepository userRepository;
     private final EventFinder eventFinder;
     private final RequestMapper requestMapper;
 
     @Override
     public Collection<RequestDto> getAllUserRequest(Long userId) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Set<Request> requests = requestRepository.findAllByRequesterId(userId);
         log.info("GET requests by userId = {}",userId);
         return requests.stream().map(requestMapper::toRequestDto).toList();
@@ -45,7 +46,8 @@ public class RequestServiceImpl implements RequestService {
             throw new DuplicateRequestException("Request can be only one");
         }
         Event event = eventFinder.findById(eventId);
-        User user = userFinder.getUserById(userId);
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         RequestStatus status = RequestStatus.PENDING;
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
@@ -78,7 +80,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Request request = requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException("Request not found"));
         request.setStatus(RequestStatus.CANCELED);

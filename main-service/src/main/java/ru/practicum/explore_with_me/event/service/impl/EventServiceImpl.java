@@ -37,7 +37,8 @@ import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
 import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
-import ru.practicum.explore_with_me.user.utils.UserFinder;
+import ru.practicum.explore_with_me.user.dao.UserRepository;
+import ru.practicum.explore_with_me.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -54,7 +55,7 @@ public class EventServiceImpl implements EventService {
     final RequestMapper requestMapper;
     final EventFinder eventFinder;
     final LocationFinder locationFinder;
-    final UserFinder userFinder;
+    final UserRepository userRepository;
     final EntityManager entityManager;
     final StatsClient statsClient;
 
@@ -203,7 +204,10 @@ public class EventServiceImpl implements EventService {
         Location location = locationFinder.findById(newEventDto.getLocation().getLat(),
                 newEventDto.getLocation().getLon());
 
-        event.setInitiator(userFinder.getUserById(userId));
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
+
+        event.setInitiator(user);
         event.setLocation(location);
 
         log.info("Create new event with userId = {}", userId);
@@ -260,7 +264,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<RequestDto> getRequests(Long userId, Long eventId) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Event event = eventFinder.findById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {
@@ -276,7 +281,8 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventRequestStatusUpdateResult updateRequest(Long userId, Long eventId,
                                                         EventRequestStatusUpdateRequest updateRequest) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Event event = eventFinder.findById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {

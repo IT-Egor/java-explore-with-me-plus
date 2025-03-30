@@ -51,10 +51,10 @@ public class Event {
     LocalDateTime createdOn;
 
     @Transient
-    Integer confirmedRequests;
+    Integer confirmedRequests = 0;
 
     LocalDateTime publishedOn;
 
     @Transient
-    Long views;
+    Long views = 0L;
 }

@@ -381,7 +381,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> hitsById = response.stream()
                 .collect(
                         Collectors.toMap(
-                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/" + 1))),
+                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/") + 1)),
                                 GetResponse::getHits
                         )
                 );

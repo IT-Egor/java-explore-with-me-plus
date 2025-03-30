@@ -13,8 +13,8 @@ import ru.practicum.explore_with_me.category.dto.CategoryResponse;
 import ru.practicum.explore_with_me.category.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.category.service.CategoryService;
-import ru.practicum.explore_with_me.category.utils.CategoryFinder;
 import ru.practicum.explore_with_me.error.model.AlreadyExistsException;
+import ru.practicum.explore_with_me.error.model.NotFoundException;
 
 import java.util.Collection;
 
@@ -24,7 +24,6 @@ import java.util.Collection;
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
-    private final CategoryFinder categoryFinder;
 
     @Override
     public CategoryResponse createCategory(CategoryMergeRequest categoryMergeRequest) {
@@ -41,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse getCategoryById(Long categoryId) {
         log.info("Get category with id={}", categoryId);
-        return categoryMapper.categoryToResponse(categoryFinder.findById(categoryId));
+        return categoryMapper.categoryToResponse(findCategoryById(categoryId));
     }
 
     @Override
@@ -58,7 +57,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse updateCategory(CategoryMergeRequest categoryMergeRequest, Long categoryId) {
         try {
-            Category oldCategory = categoryFinder.findById(categoryId);
+            Category oldCategory = findCategoryById(categoryId);
             oldCategory.setName(categoryMergeRequest.getName());
             CategoryResponse categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(oldCategory));
             log.info("Category with id={} was updated", categoryId);
@@ -70,7 +69,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategoryById(Long categoryId) {
-        categoryFinder.findById(categoryId);
+        findCategoryById(categoryId);
         categoryRepository.deleteById(categoryId);
         log.info("Category with id={} was deleted", categoryId);
     }
@@ -82,5 +81,10 @@ public class CategoryServiceImpl implements CategoryService {
         }
         log.warn("Data integrity violation", e);
         return e;
+    }
+
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId).orElseThrow(() ->
+                new NotFoundException(String.format("Category with id=%d not found", categoryId)));
     }
 }

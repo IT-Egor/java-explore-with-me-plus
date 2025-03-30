@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.error.model.*;
+import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
-import ru.practicum.explore_with_me.event.utils.EventFinder;
 import ru.practicum.explore_with_me.request.dao.RequestRepository;
 import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final UserRepository userRepository;
-    private final EventFinder eventFinder;
+    private final EventRepository eventRepository;
     private final RequestMapper requestMapper;
 
     @Override
@@ -45,7 +45,8 @@ public class RequestServiceImpl implements RequestService {
         if (requestOptional.isPresent()) {
             throw new DuplicateRequestException("Request can be only one");
         }
-        Event event = eventFinder.findById(eventId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Event with id = %s, not found", eventId)));
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User with id=%d + not found", userId)));
         RequestStatus status = RequestStatus.PENDING;

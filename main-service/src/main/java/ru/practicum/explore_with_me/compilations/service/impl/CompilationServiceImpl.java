@@ -15,7 +15,7 @@ import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
 import ru.practicum.explore_with_me.compilations.utils.CompilationFinder;
-import ru.practicum.explore_with_me.event.utils.EventFinder;
+import ru.practicum.explore_with_me.event.dao.EventRepository;
 
 import java.util.Collection;
 
@@ -29,13 +29,13 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
     private final CompilationFinder compilationFinder;
-    private final EventFinder eventFinder;
+    private final EventRepository eventRepository;
 
     @Override
     public CompilationResponse create(CreateCompilationRequest createCompilationRequest) {
         Compilation compilation = compilationMapper.createRequestToCompilation(
                 createCompilationRequest,
-                eventFinder.findAllByIdIn(createCompilationRequest.getEvents()));
+                eventRepository.findAllByIdIn(createCompilationRequest.getEvents()));
         CompilationResponse response = compilationMapper.compilationToResponse(compilationRepository.save(compilation));
         log.info("Compilation with id={} was created", response.getId());
         return response;
@@ -74,7 +74,7 @@ public class CompilationServiceImpl implements CompilationService {
         compilationMapper.compilationUpdateRequest(
                 updateCompilationRequest,
                 compilation,
-        eventFinder.findAllByIdIn(updateCompilationRequest.getEvents()));
+        eventRepository.findAllByIdIn(updateCompilationRequest.getEvents()));
         CompilationResponse response = compilationMapper.compilationToResponse(
                 compilationRepository.save(compilation));
         log.info("Compilation with id={} was updated", response.getId());

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.client.StatsClient;
 import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
+import ru.practicum.explore_with_me.event.dao.LocationRepository;
 import ru.practicum.explore_with_me.event.dto.*;
 import ru.practicum.explore_with_me.event.mapper.EventMapper;
 import ru.practicum.explore_with_me.event.model.Event;
@@ -29,15 +30,14 @@ import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.event.model.enums.EventStateAction;
 import ru.practicum.explore_with_me.event.model.enums.SortType;
 import ru.practicum.explore_with_me.event.service.EventService;
-import ru.practicum.explore_with_me.event.utils.EventFinder;
-import ru.practicum.explore_with_me.event.utils.LocationFinder;
-import ru.practicum.explore_with_me.event.utils.specification.EventFindSpecification;
+import ru.practicum.explore_with_me.event.specification.EventFindSpecification;
 import ru.practicum.explore_with_me.request.dao.RequestRepository;
 import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
 import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
-import ru.practicum.explore_with_me.user.utils.UserFinder;
+import ru.practicum.explore_with_me.user.dao.UserRepository;
+import ru.practicum.explore_with_me.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -52,9 +52,8 @@ public class EventServiceImpl implements EventService {
     final RequestRepository requestRepository;
     final EventMapper eventMapper;
     final RequestMapper requestMapper;
-    final EventFinder eventFinder;
-    final LocationFinder locationFinder;
-    final UserFinder userFinder;
+    final LocationRepository locationRepository;
+    final UserRepository userRepository;
     final EntityManager entityManager;
     final StatsClient statsClient;
 
@@ -64,6 +63,8 @@ public class EventServiceImpl implements EventService {
         Pageable pageable = PageRequest.of(pageNumber, size);
 
         Page<Event> page = eventRepository.findAllByInitiatorId(userId, pageable);
+
+        addViewsInEventsPage(page);
 
         log.info("Get events with {userId, from, size} = ({}, {}, {})", userId, from, size);
         return page.getContent().stream().map(eventMapper::toShortDto).toList();
@@ -95,6 +96,8 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateBefore(rangeEnd));
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
+        addViewsInEventsPage(page);
+
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
 
@@ -106,10 +109,10 @@ public class EventServiceImpl implements EventService {
 
         return page.stream()
                 .map(event -> {
-                   event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
-                           event.getId(),
-                           Collections.emptyList()).size());
-                   return eventMapper.toFullDto(event);
+                    event.setConfirmedRequests(eventIdToConfirmedRequests.getOrDefault(
+                            event.getId(),
+                            Collections.emptyList()).size());
+                    return eventMapper.toFullDto(event);
                 })
                 .toList();
     }
@@ -153,6 +156,7 @@ public class EventServiceImpl implements EventService {
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
+        addViewsInEventsPage(page);
 
         log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({},{},{},{},{},{},{},{},{})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
@@ -165,7 +169,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto patchEventById(Long eventId, AdminPatchEventDto adminPatchEventDto) {
-        Event event = eventFinder.findById(eventId);
+        Event event = findEventById(eventId);
 
         LocalDateTime updateStartDate = adminPatchEventDto.getEventDate();
 
@@ -182,7 +186,7 @@ public class EventServiceImpl implements EventService {
         stateChanger(event, updateStateAction);
 
         if (adminPatchEventDto.getLocation() != null) {
-            Location location = locationFinder.findById(adminPatchEventDto.getLocation().getLat(),
+            Location location = findLocationByLatAndLon(adminPatchEventDto.getLocation().getLat(),
                     adminPatchEventDto.getLocation().getLon());
             event.setLocation(location);
         }
@@ -200,10 +204,12 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
         Event event = eventMapper.toEvent(newEventDto);
-        Location location = locationFinder.findById(newEventDto.getLocation().getLat(),
+        Location location = findLocationByLatAndLon(newEventDto.getLocation().getLat(),
                 newEventDto.getLocation().getLon());
 
-        event.setInitiator(userFinder.getUserById(userId));
+        User user = findUserById(userId);
+
+        event.setInitiator(user);
         event.setLocation(location);
 
         log.info("Create new event with userId = {}", userId);
@@ -212,35 +218,35 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
-        return eventMapper.toFullDto(eventFinder.findByIdAndInitiatorId(userId, eventId));
+        Event event = findEventByIdAndInitiatorId(userId, eventId);
+        if (event.getPublishedOn() != null) {
+            addViewsInEvent(event);
+        }
+        return eventMapper.toFullDto(event);
     }
 
     @Override
     public EventFullDto getEventByIdPublic(Long eventId, HttpServletRequest httpServletRequest) {
-        Event event = eventFinder.findById(eventId);
+        Event event = findEventById(eventId);
 
         if (event.getState() != EventState.PUBLISHED) {
             throw new GetPublicEventException("Event must be published");
         }
 
         saveViewInStatistic("/events/" + eventId, httpServletRequest.getRemoteAddr());
-
-        List<GetResponse> getResponses = loadViewFromStatistic(
-                event.getPublishedOn(),
-                LocalDateTime.now(),
-                List.of("/events/" + eventId),
-                true);
-        if (!getResponses.isEmpty()) {
-            GetResponse getResponse = getResponses.getFirst();
-            event.setViews(getResponse.getHits());
-        }
-        return eventMapper.toFullDto(eventRepository.save(event));
+        addViewsInEvent(event);
+        return eventMapper.toFullDto(event);
     }
 
     @Override
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
-        Event event = eventFinder.findByIdAndInitiatorId(userId, eventId);
+        Event event = findEventByIdAndInitiatorId(userId, eventId);
+
+        if (event.getPublishedOn() != null) {
+            addViewsInEvent(event);
+        }
+
 
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
@@ -248,11 +254,10 @@ public class EventServiceImpl implements EventService {
 
         stateChanger(event, updateRequest.getStateAction());
         if (updateRequest.getLocation() != null) {
-            Location location = locationFinder.findById(updateRequest.getLocation().getLat(),
+            Location location = findLocationByLatAndLon(updateRequest.getLocation().getLat(),
                     updateRequest.getLocation().getLon());
             event.setLocation(location);
         }
-
         eventMapper.updateUserRequest(updateRequest, event);
         log.info("Update event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
@@ -260,12 +265,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<RequestDto> getRequests(Long userId, Long eventId) {
-        userFinder.getUserById(userId);
-        Event event = eventFinder.findById(eventId);
-
-        if (!event.getInitiator().getId().equals(userId)) {
-            throw new NotFoundException("The event initiator does not match the user id");
-        }
+        getVerifiedEvent(userId, eventId);
 
         Set<Request> requests = requestRepository.findAllByEventId(eventId);
 
@@ -276,12 +276,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventRequestStatusUpdateResult updateRequest(Long userId, Long eventId,
                                                         EventRequestStatusUpdateRequest updateRequest) {
-        userFinder.getUserById(userId);
-        Event event = eventFinder.findById(eventId);
-
-        if (!event.getInitiator().getId().equals(userId)) {
-            throw new NotFoundException("The event initiator does not match the user id");
-        }
+        Event event = getVerifiedEvent(userId, eventId);
 
         List<Request> requests = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
 
@@ -323,6 +318,17 @@ public class EventServiceImpl implements EventService {
                 .build();
     }
 
+    private Event getVerifiedEvent(Long userId, Long eventId) {
+        findUserById(userId);
+
+        Event event = findEventById(eventId);
+
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new NotFoundException("The event initiator does not match the user id");
+        }
+        return event;
+    }
+
     private void stateChanger(Event event, EventStateAction stateAction) {
         if (stateAction != null) {
             Map<EventStateAction, EventState> state = Map.of(
@@ -347,6 +353,57 @@ public class EventServiceImpl implements EventService {
         return statsClient.getStats(start, end, uris, unique);
     }
 
+    private void addViewsInEventsPage(Page<Event> page) {
+        if (page == null || page.isEmpty()) {
+            return;
+        }
+        LocalDateTime earlyPublishedDate = null;
+        List<String> uris = new ArrayList<>();
+        for (Event event : page) {
+            if (event.getPublishedOn() != null) {
+                uris.add("/events/" + event.getId());
+                if (earlyPublishedDate == null || event.getPublishedOn().isBefore(earlyPublishedDate)) {
+                    earlyPublishedDate = event.getPublishedOn();
+                }
+            }
+        }
+
+        if (earlyPublishedDate == null) {
+            return;
+        }
+
+        List<GetResponse> response = loadViewFromStatistic(earlyPublishedDate, LocalDateTime.now(), uris, true);
+
+        if (response == null || response.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Long> hitsById = response.stream()
+                .collect(
+                        Collectors.toMap(
+                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/" + 1))),
+                                GetResponse::getHits
+                        )
+                );
+
+        for (Event event : page) {
+            event.setViews(hitsById.getOrDefault(event.getId(), 0L));
+        }
+    }
+
+    private void addViewsInEvent(Event event) {
+        List<GetResponse> getResponses = loadViewFromStatistic(
+                event.getPublishedOn(),
+                LocalDateTime.now(),
+                List.of("/events/" + event.getId()),
+                true);
+
+        if (!getResponses.isEmpty()) {
+            GetResponse getResponse = getResponses.getFirst();
+            event.setViews(getResponse.getHits());
+        }
+    }
+
     private EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {
         EventStateAction updateStateAction = adminPatchEventDto.getStateAction();
 
@@ -359,5 +416,26 @@ public class EventServiceImpl implements EventService {
             throw new PublicationException("Cannot reject a published event");
         }
         return updateStateAction;
+    }
+
+    private Event findEventById(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Event with id = %s, not found", eventId)));
+    }
+
+    private Event findEventByIdAndInitiatorId(Long userId, Long eventId) {
+        return eventRepository.findByIdAndInitiatorId(eventId, userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d and userId=%d not found", eventId, userId)));
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
+    }
+
+    private Location findLocationByLatAndLon(Float lat, Float lon) {
+        return locationRepository
+                .findByLatAndLon(lat, lon)
+                .orElseGet(() -> locationRepository.save(Location.builder().lat(lat).lon(lon).build()));
     }
 }

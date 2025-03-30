@@ -20,12 +20,23 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleAlreadyExistException(AlreadyExistsException e) {
-        String reasonMessage = "Field already exists";
-        log.error("CONFLICT: {}", reasonMessage, e);
+    public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        String reasonMessage;
+        String errorMessage;
+        if (e.getMessage().contains("users_email_key")) {
+            reasonMessage = "Creating user with already existing email";
+            errorMessage = "Email already exists";
+        } else if (e.getMessage().contains("categories_name_key")) {
+            reasonMessage = "Creating category with already existing name";
+            errorMessage = "Category already exists";
+        } else {
+            reasonMessage = "Integrity violation";
+            errorMessage = e.getMessage();
+        }
+        log.error("Conflict: {}", reasonMessage, e);
         return ErrorResponse.builder()
-                .errors(List.of(e.getMessage()))
-                .message(e.getMessage())
+                .errors(List.of(errorMessage))
+                .message(errorMessage)
                 .reason(reasonMessage)
                 .status(HttpStatus.CONFLICT.toString())
                 .build();
@@ -132,19 +143,6 @@ public class ErrorHandler {
                 .message(e.getMessage())
                 .reason("Entity not found")
                 .status(HttpStatus.NOT_FOUND.toString())
-                .build();
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        String reasonMessage = "Related objects delete";
-        log.error("CONFLICT: {}", reasonMessage, e);
-        return ErrorResponse.builder()
-                .errors(List.of(e.getMessage()))
-                .message(e.getMessage())
-                .reason(reasonMessage)
-                .status(HttpStatus.CONFLICT.toString())
                 .build();
     }
 

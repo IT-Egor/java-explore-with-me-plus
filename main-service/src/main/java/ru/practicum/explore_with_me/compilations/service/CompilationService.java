@@ -1,13 +1,12 @@
 package ru.practicum.explore_with_me.compilations.service;
 
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
-import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
-import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
+import ru.practicum.explore_with_me.compilations.dto.CompilationDto;
 
 import java.util.Collection;
 
 public interface CompilationService {
-    CompilationResponse create(CreateCompilationRequest createCompilationRequest);
+    CompilationResponse create(CompilationDto compilationDto);
 
     void deleteById(Long compilationId);
 
@@ -15,5 +14,5 @@ public interface CompilationService {
 
     Collection<CompilationResponse> getCompilations(Boolean pinned, Integer from, Integer size);
 
-    CompilationResponse update(Long compilationId, UpdateCompilationRequest updateCompilationRequest);
+    CompilationResponse update(Long compilationId, CompilationDto updateCompilationRequest);
 }

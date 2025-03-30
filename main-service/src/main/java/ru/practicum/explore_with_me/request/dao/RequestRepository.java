@@ -7,12 +7,11 @@ import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface RequestRepository extends JpaRepository<Request, Long>, JpaSpecificationExecutor<Request> {
-    Optional<Request> findByRequesterIdAndEventId(Long requesterId, Long eventId);
+    boolean existsByRequesterIdAndEventId(Long requesterId, Long eventId);
 
     Set<Request> findAllByRequesterId(Long requesterId);
 

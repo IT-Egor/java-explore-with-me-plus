@@ -3,22 +3,22 @@ package ru.practicum.explore_with_me.request.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.error.model.*;
+import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
-import ru.practicum.explore_with_me.event.utils.EventFinder;
 import ru.practicum.explore_with_me.request.dao.RequestRepository;
 import ru.practicum.explore_with_me.request.dto.RequestDto;
 import ru.practicum.explore_with_me.request.mapper.RequestMapper;
 import ru.practicum.explore_with_me.request.model.Request;
 import ru.practicum.explore_with_me.request.model.enums.RequestStatus;
 import ru.practicum.explore_with_me.request.service.RequestService;
+import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.model.User;
-import ru.practicum.explore_with_me.user.utils.UserFinder;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -26,26 +26,29 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
-    private final UserFinder userFinder;
-    private final EventFinder eventFinder;
+    private final UserRepository userRepository;
+    private final EventRepository eventRepository;
     private final RequestMapper requestMapper;
 
     @Override
     public Collection<RequestDto> getAllUserRequest(Long userId) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Set<Request> requests = requestRepository.findAllByRequesterId(userId);
         log.info("GET requests by userId = {}",userId);
         return requests.stream().map(requestMapper::toRequestDto).toList();
     }
 
     @Override
+    @Transactional
     public RequestDto createRequest(Long userId, Long eventId) {
-        Optional<Request> requestOptional = requestRepository.findByRequesterIdAndEventId(userId, eventId);
-        if (requestOptional.isPresent()) {
+        if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
             throw new DuplicateRequestException("Request can be only one");
         }
-        Event event = eventFinder.findById(eventId);
-        User user = userFinder.getUserById(userId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException(String.format("Event with id = %s, not found", eventId)));
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         RequestStatus status = RequestStatus.PENDING;
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
@@ -78,7 +81,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        userFinder.getUserById(userId);
+        userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d + not found", userId)));
         Request request = requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException("Request not found"));
         request.setStatus(RequestStatus.CANCELED);

@@ -14,7 +14,7 @@ import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
-import ru.practicum.explore_with_me.compilations.utils.CompilationFinder;
+import ru.practicum.explore_with_me.error.model.NotFoundException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 
 import java.util.Collection;
@@ -28,7 +28,6 @@ import static ru.practicum.explore_with_me.compilations.dao.CompilationRepositor
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final CompilationMapper compilationMapper;
-    private final CompilationFinder compilationFinder;
     private final EventRepository eventRepository;
 
     @Override
@@ -43,7 +42,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationResponse getCompilationById(Long compId) {
-        Compilation compilation = compilationFinder.findById(compId);
+        Compilation compilation = findCompilationById(compId);
         log.info("Compilation with id={} was found", compilation.getId());
         return compilationMapper.compilationToResponse(compilation);
     }
@@ -63,14 +62,14 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public void deleteById(Long compilationId) {
-        compilationFinder.findById(compilationId);
+        findCompilationById(compilationId);
         compilationRepository.deleteById(compilationId);
         log.info("Compilation with id={} was deleted", compilationId);
     }
 
     @Override
     public CompilationResponse update(Long compilationId, UpdateCompilationRequest updateCompilationRequest) {
-        Compilation compilation = compilationFinder.findById(compilationId);
+        Compilation compilation = findCompilationById(compilationId);
         compilationMapper.compilationUpdateRequest(
                 updateCompilationRequest,
                 compilation,
@@ -79,5 +78,10 @@ public class CompilationServiceImpl implements CompilationService {
                 compilationRepository.save(compilation));
         log.info("Compilation with id={} was updated", response.getId());
         return response;
+    }
+
+    private Compilation findCompilationById(Long compilationId) {
+        return compilationRepository.findById(compilationId).orElseThrow(() ->
+                new NotFoundException(String.format("Compilation with id=%s, not found", compilationId)));
     }
 }

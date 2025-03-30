@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.category.dao.CategoryRepository;
 import ru.practicum.explore_with_me.category.dto.CategoryMergeRequest;
 import ru.practicum.explore_with_me.category.dto.CategoryResponse;
@@ -20,6 +21,7 @@ import java.util.Collection;
 
 @Slf4j
 @Service
+@Transactional
 @AllArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
@@ -38,12 +40,14 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long categoryId) {
         log.info("Get category with id={}", categoryId);
         return categoryMapper.categoryToResponse(findCategoryById(categoryId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Collection<CategoryResponse> getCategories(int from, int size) {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
@@ -69,9 +73,11 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategoryById(Long categoryId) {
-        findCategoryById(categoryId);
-        categoryRepository.deleteById(categoryId);
-        log.info("Category with id={} was deleted", categoryId);
+        if (categoryRepository.deleteCategoriesById(categoryId).isPresent()) {
+            log.info("Category with id={} was deleted", categoryId);
+        } else {
+            throw new NotFoundException(String.format("Category with id=%d not found", categoryId));
+        }
     }
 
     private RuntimeException checkUniqueConstraint(RuntimeException e, String categoryName) {

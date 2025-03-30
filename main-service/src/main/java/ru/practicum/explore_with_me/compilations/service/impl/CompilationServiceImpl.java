@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.compilations.dao.CompilationRepository;
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
 import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
@@ -24,6 +25,7 @@ import static ru.practicum.explore_with_me.compilations.dao.CompilationRepositor
 
 @Slf4j
 @Service
+@Transactional
 @AllArgsConstructor
 public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
@@ -41,6 +43,7 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompilationResponse getCompilationById(Long compId) {
         Compilation compilation = findCompilationById(compId);
         log.info("Compilation with id={} was found", compilation.getId());
@@ -48,6 +51,7 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Collection<CompilationResponse> getCompilations(Boolean pinned, Integer from, Integer size) {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
@@ -62,9 +66,11 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public void deleteById(Long compilationId) {
-        findCompilationById(compilationId);
-        compilationRepository.deleteById(compilationId);
-        log.info("Compilation with id={} was deleted", compilationId);
+        if (compilationRepository.deleteCompilationById(compilationId).isPresent()) {
+            log.info("Compilation with id={} was deleted", compilationId);
+        } else {
+            throw new NotFoundException(String.format("Compilation with id=%s, not found", compilationId));
+        }
     }
 
     @Override

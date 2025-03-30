@@ -1,4 +1,4 @@
-package ru.practicum.explore_with_me.event.utils.specification;
+package ru.practicum.explore_with_me.event.specification;
 
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;

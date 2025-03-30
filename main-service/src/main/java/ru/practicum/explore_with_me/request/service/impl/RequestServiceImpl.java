@@ -3,6 +3,7 @@ package ru.practicum.explore_with_me.request.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.error.model.*;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
@@ -18,7 +19,6 @@ import ru.practicum.explore_with_me.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -40,9 +40,9 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public RequestDto createRequest(Long userId, Long eventId) {
-        Optional<Request> requestOptional = requestRepository.findByRequesterIdAndEventId(userId, eventId);
-        if (requestOptional.isPresent()) {
+        if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
             throw new DuplicateRequestException("Request can be only one");
         }
         Event event = eventRepository.findById(eventId)

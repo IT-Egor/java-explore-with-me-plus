@@ -49,7 +49,12 @@ public class Event {
     Integer participantLimit;
     Boolean requestModeration;
     LocalDateTime createdOn;
+
+    @Transient
     Integer confirmedRequests;
+
     LocalDateTime publishedOn;
+
+    @Transient
     Long views;
 }

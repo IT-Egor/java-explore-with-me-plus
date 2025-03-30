@@ -64,6 +64,8 @@ public class EventServiceImpl implements EventService {
 
         Page<Event> page = eventRepository.findAllByInitiatorId(userId, pageable);
 
+        addViewsInEventsPage(page);
+
         log.info("Get events with {userId, from, size} = ({}, {}, {})", userId, from, size);
         return page.getContent().stream().map(eventMapper::toShortDto).toList();
     }
@@ -93,6 +95,8 @@ public class EventServiceImpl implements EventService {
                 .and(EventFindSpecification.eventDateAfter(rangeStart))
                 .and(EventFindSpecification.eventDateBefore(rangeEnd));
         Page<Event> page = eventRepository.findAll(specification, pageable);
+
+        addViewsInEventsPage(page);
 
         log.info("Get events with {users, states, categories, rangeStart, rangeEnd, from, size} = ({},{},{},{},{},{},{})",
                 users, size, categories, rangeStart, rangeEnd, from, size);
@@ -152,6 +156,7 @@ public class EventServiceImpl implements EventService {
         Page<Event> page = eventRepository.findAll(specification, pageable);
 
         saveViewInStatistic("/events", httpServletRequest.getRemoteAddr());
+        addViewsInEventsPage(page);
 
         log.info("Get events with {text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size} = ({},{},{},{},{},{},{},{},{})",
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
@@ -213,7 +218,11 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventById(Long userId, Long eventId) {
-        return eventMapper.toFullDto(findEventByIdAndInitiatorId(userId, eventId));
+        Event event = findEventByIdAndInitiatorId(userId, eventId);
+        if (event.getPublishedOn() != null) {
+            addViewsInEvent(event);
+        }
+        return eventMapper.toFullDto(event);
     }
 
     @Override
@@ -225,23 +234,19 @@ public class EventServiceImpl implements EventService {
         }
 
         saveViewInStatistic("/events/" + eventId, httpServletRequest.getRemoteAddr());
-
-        List<GetResponse> getResponses = loadViewFromStatistic(
-                event.getPublishedOn(),
-                LocalDateTime.now(),
-                List.of("/events/" + eventId),
-                true);
-        if (!getResponses.isEmpty()) {
-            GetResponse getResponse = getResponses.getFirst();
-            event.setViews(getResponse.getHits());
-        }
-        return eventMapper.toFullDto(eventRepository.save(event));
+        addViewsInEvent(event);
+        return eventMapper.toFullDto(event);
     }
 
     @Override
     @Transactional
     public EventFullDto updateEvent(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = findEventByIdAndInitiatorId(userId, eventId);
+
+        if (event.getPublishedOn() != null) {
+            addViewsInEvent(event);
+        }
+
 
         if (event.getState().equals(EventState.PUBLISHED)) {
             throw new AlreadyPublishedException("Event with eventId = " + eventId + "has already been published");
@@ -253,7 +258,6 @@ public class EventServiceImpl implements EventService {
                     updateRequest.getLocation().getLon());
             event.setLocation(location);
         }
-
         eventMapper.updateUserRequest(updateRequest, event);
         log.info("Update event with eventId = {}", eventId);
         return eventMapper.toFullDto(eventRepository.save(event));
@@ -347,6 +351,57 @@ public class EventServiceImpl implements EventService {
 
     private List<GetResponse> loadViewFromStatistic(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         return statsClient.getStats(start, end, uris, unique);
+    }
+
+    private void addViewsInEventsPage(Page<Event> page){
+        if (page == null || page.isEmpty()){
+            return;
+        }
+        LocalDateTime earlyPublishedDate = null;
+        List<String> uris = new ArrayList<>();
+        for (Event event : page){
+            if (event.getPublishedOn() != null){
+                uris.add("/events/"+event.getId());
+                if (earlyPublishedDate == null || event.getPublishedOn().isAfter(earlyPublishedDate)){
+                    earlyPublishedDate = event.getPublishedOn();
+                }
+            }
+        }
+
+        if (earlyPublishedDate == null){
+            return;
+        }
+
+        List<GetResponse> response = loadViewFromStatistic(earlyPublishedDate,LocalDateTime.now(),uris,true);
+
+        if (response == null || response.isEmpty()) {
+            return;
+        }
+
+        Map<Long,Long> hitsById = response.stream()
+                .collect(
+                        Collectors.toMap(
+                                getResponse -> Long.parseLong(getResponse.getUri().substring(getResponse.getUri().lastIndexOf("/"+1))),
+                                GetResponse::getHits
+                        )
+                );
+
+        for (Event event : page){
+            event.setViews(hitsById.getOrDefault(event.getId(), 0L));
+        }
+    }
+
+    private void addViewsInEvent(Event event){
+        List<GetResponse> getResponses = loadViewFromStatistic(
+                event.getPublishedOn(),
+                LocalDateTime.now(),
+                List.of("/events/" + event.getId()),
+                true);
+
+        if (!getResponses.isEmpty()) {
+            GetResponse getResponse = getResponses.getFirst();
+            event.setViews(getResponse.getHits());
+        }
     }
 
     private EventStateAction getUpdateStateAction(AdminPatchEventDto adminPatchEventDto, Event event) {

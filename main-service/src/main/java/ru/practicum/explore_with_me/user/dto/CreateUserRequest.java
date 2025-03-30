@@ -22,7 +22,6 @@ public class CreateUserRequest {
     String email;
 
     @NotBlank(message = "Name is required")
-    @NotNull(message = "Name is required")
     @Size(min = 2, max = 250, message = "Name should be between 2 and 250 characters long")
     String name;
 }

@@ -2,13 +2,11 @@ package ru.practicum.explore_with_me.user.service.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.explore_with_me.error.model.AlreadyExistsException;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
 import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.dto.CreateUserRequest;
@@ -30,19 +28,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(CreateUserRequest createUserRequest) {
-        try {
-            User user = userMapper.requestToUser(createUserRequest);
-            UserResponse userResponse = userMapper.userToResponse(userRepository.save(user));
-            log.info("User with id={} was created", userResponse.getId());
-            return userResponse;
-        } catch (DataIntegrityViolationException e) {
-            if (e.getMessage().contains("users_email_key")) {
-                log.warn("User with email '{}' already exists", createUserRequest.getEmail());
-                throw new AlreadyExistsException(String.format("User with email '%s' already exists", createUserRequest.getEmail()));
-            } else {
-                throw e;
-            }
-        }
+        User user = userMapper.requestToUser(createUserRequest);
+        UserResponse userResponse = userMapper.userToResponse(userRepository.save(user));
+        log.info("User with id={} was created", userResponse.getId());
+        return userResponse;
     }
 
     @Override

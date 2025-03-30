@@ -21,7 +21,7 @@ public class PublicCategoryController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<CategoryResponse> getCategories(@PositiveOrZero(message = "from must be greater or equal to zero")
-                                                      @RequestParam(defaultValue = "0") int from,
+                                                      @RequestParam int from,
 
                                                       @Positive(message = "size must be greater than zero")
                                                       @RequestParam(defaultValue = "10") int size) {

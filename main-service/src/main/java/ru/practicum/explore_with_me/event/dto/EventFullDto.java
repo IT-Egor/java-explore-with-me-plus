@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.explore_with_me.category.dto.CategoryResponse;
+import ru.practicum.explore_with_me.category.dto.CategoryDto;
 import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.user.dto.UserShortDto;
 
@@ -22,7 +22,7 @@ public class EventFullDto {
     Long id;
     String title;
     String annotation;
-    CategoryResponse category;
+    CategoryDto category;
     Boolean paid;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

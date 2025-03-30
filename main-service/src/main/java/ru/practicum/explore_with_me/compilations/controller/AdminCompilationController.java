@@ -4,10 +4,17 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.explore_with_me.compilations.dto.CompilationDto;
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
-import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
 
 @Slf4j
@@ -19,8 +26,8 @@ public class AdminCompilationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CompilationResponse createCompilation(@Valid @RequestBody CreateCompilationRequest createCompilationRequest) {
-        return compilationService.create(createCompilationRequest);
+    public CompilationResponse createCompilation(@Validated(CompilationDto.OnCreate.class) @Valid @RequestBody CompilationDto compilationDto) {
+        return compilationService.create(compilationDto);
     }
 
     @DeleteMapping("/{compId}")
@@ -32,7 +39,7 @@ public class AdminCompilationController {
     @PatchMapping("/{compId}")
     @ResponseStatus(HttpStatus.OK)
     public CompilationResponse patchCompilation(@PathVariable Long compId,
-                                                @Valid @RequestBody UpdateCompilationRequest updateCompilationRequest) {
+                                                @Validated(CompilationDto.OnUpdate.class) @Valid @RequestBody CompilationDto updateCompilationRequest) {
         return compilationService.update(compId, updateCompilationRequest);
     }
 }

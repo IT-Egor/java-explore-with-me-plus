@@ -12,13 +12,17 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreateCompilationRequest {
-    @NotBlank(message = "title is required")
-    @Size(min = 1, max = 50, message = "title length must be between 1 and 50 characters")
+public class CompilationDto {
+    @NotBlank(groups = OnCreate.class, message = "title is required")
+    @Size(groups = {OnCreate.class, OnUpdate.class}, min = 1, max = 50, message = "title length must be between 1 and 50 characters")
     String title;
 
     @Builder.Default
     Boolean pinned = false;
 
     Set<Long> events;
+
+    public interface OnCreate {}  // Группа для создания
+
+    public interface OnUpdate {}  // Группа для обновления
 }

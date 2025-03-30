@@ -8,8 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.category.dao.CategoryRepository;
-import ru.practicum.explore_with_me.category.dto.CategoryMergeRequest;
-import ru.practicum.explore_with_me.category.dto.CategoryResponse;
+import ru.practicum.explore_with_me.category.dto.CategoryDto;
 import ru.practicum.explore_with_me.category.mapper.CategoryMapper;
 import ru.practicum.explore_with_me.category.model.Category;
 import ru.practicum.explore_with_me.category.service.CategoryService;
@@ -27,25 +26,25 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryFinder categoryFinder;
 
     @Override
-    public CategoryResponse createCategory(CategoryMergeRequest categoryMergeRequest) {
+    public CategoryDto createCategory(CategoryDto categoryDto) {
         try {
-            Category category = categoryMapper.requestToCategory(categoryMergeRequest);
-            CategoryResponse categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(category));
+            Category category = categoryMapper.requestToCategory(categoryDto);
+            CategoryDto categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(category));
             log.info("Category with id={} was created", categoryResponse.getId());
             return categoryResponse;
         } catch (DataIntegrityViolationException e) {
-            throw checkUniqueConstraint(e, categoryMergeRequest.getName());
+            throw checkUniqueConstraint(e, categoryDto.getName());
         }
     }
 
     @Override
-    public CategoryResponse getCategoryById(Long categoryId) {
+    public CategoryDto getCategoryById(Long categoryId) {
         log.info("Get category with id={}", categoryId);
         return categoryMapper.categoryToResponse(categoryFinder.findById(categoryId));
     }
 
     @Override
-    public Collection<CategoryResponse> getCategories(int from, int size) {
+    public Collection<CategoryDto> getCategories(int from, int size) {
         int pageNumber = from / size;
         Pageable pageable = PageRequest.of(pageNumber, size);
 
@@ -56,15 +55,15 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse updateCategory(CategoryMergeRequest categoryMergeRequest, Long categoryId) {
+    public CategoryDto updateCategory(CategoryDto categoryDto, Long categoryId) {
         try {
             Category oldCategory = categoryFinder.findById(categoryId);
-            oldCategory.setName(categoryMergeRequest.getName());
-            CategoryResponse categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(oldCategory));
+            oldCategory.setName(categoryDto.getName());
+            CategoryDto categoryResponse = categoryMapper.categoryToResponse(categoryRepository.save(oldCategory));
             log.info("Category with id={} was updated", categoryId);
             return categoryResponse;
         } catch (DataIntegrityViolationException e) {
-            throw checkUniqueConstraint(e, categoryMergeRequest.getName());
+            throw checkUniqueConstraint(e, categoryDto.getName());
         }
     }
 

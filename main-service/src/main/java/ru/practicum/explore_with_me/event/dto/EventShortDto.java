@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.explore_with_me.category.dto.CategoryResponse;
+import ru.practicum.explore_with_me.category.dto.CategoryDto;
 import ru.practicum.explore_with_me.user.dto.UserResponse;
 
 import java.time.LocalDateTime;
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 public class EventShortDto {
     Long id;
     String annotation;
-    CategoryResponse category;
+    CategoryDto category;
     Long confirmedRequests;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

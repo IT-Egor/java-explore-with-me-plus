@@ -9,8 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import ru.practicum.explore_with_me.compilations.dao.CompilationRepository;
 import ru.practicum.explore_with_me.compilations.dto.CompilationResponse;
-import ru.practicum.explore_with_me.compilations.dto.CreateCompilationRequest;
-import ru.practicum.explore_with_me.compilations.dto.UpdateCompilationRequest;
+import ru.practicum.explore_with_me.compilations.dto.CompilationDto;
 import ru.practicum.explore_with_me.compilations.mapper.CompilationMapper;
 import ru.practicum.explore_with_me.compilations.model.Compilation;
 import ru.practicum.explore_with_me.compilations.service.CompilationService;
@@ -32,10 +31,10 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
 
     @Override
-    public CompilationResponse create(CreateCompilationRequest createCompilationRequest) {
+    public CompilationResponse create(CompilationDto compilationDto) {
         Compilation compilation = compilationMapper.createRequestToCompilation(
-                createCompilationRequest,
-                eventRepository.findAllByIdIn(createCompilationRequest.getEvents()));
+                compilationDto,
+                eventRepository.findAllByIdIn(compilationDto.getEvents()));
         CompilationResponse response = compilationMapper.compilationToResponse(compilationRepository.save(compilation));
         log.info("Compilation with id={} was created", response.getId());
         return response;
@@ -69,7 +68,7 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
-    public CompilationResponse update(Long compilationId, UpdateCompilationRequest updateCompilationRequest) {
+    public CompilationResponse update(Long compilationId, CompilationDto updateCompilationRequest) {
         Compilation compilation = compilationFinder.findById(compilationId);
         compilationMapper.compilationUpdateRequest(
                 updateCompilationRequest,

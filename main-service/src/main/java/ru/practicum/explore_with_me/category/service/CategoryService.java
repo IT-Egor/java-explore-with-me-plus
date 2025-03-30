@@ -1,18 +1,17 @@
 package ru.practicum.explore_with_me.category.service;
 
-import ru.practicum.explore_with_me.category.dto.CategoryMergeRequest;
-import ru.practicum.explore_with_me.category.dto.CategoryResponse;
+import ru.practicum.explore_with_me.category.dto.CategoryDto;
 
 import java.util.Collection;
 
 public interface CategoryService {
-    CategoryResponse createCategory(CategoryMergeRequest categoryMergeRequest);
+    CategoryDto createCategory(CategoryDto categoryDto);
 
     void deleteCategoryById(Long categoryId);
 
-    Collection<CategoryResponse> getCategories(int from, int size);
+    Collection<CategoryDto> getCategories(int from, int size);
 
-    CategoryResponse updateCategory(CategoryMergeRequest request, Long categoryId);
+    CategoryDto updateCategory(CategoryDto request, Long categoryId);
 
-    CategoryResponse getCategoryById(Long categoryId);
+    CategoryDto getCategoryById(Long categoryId);
 }

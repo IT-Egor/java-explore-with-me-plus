@@ -8,6 +8,8 @@ import ru.practicum.explore_with_me.comment.dto.CommentResponse;
 import ru.practicum.explore_with_me.comment.dto.CreateCommentRequest;
 import ru.practicum.explore_with_me.comment.service.CommentService;
 
+import java.util.Collection;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("/users/{userId}/comments")
@@ -24,5 +26,11 @@ public class PrivateCommentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable Long commentId, @PathVariable Long userId) {
         commentService.deleteComment(commentId, userId);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Collection<CommentResponse> getAllCommentsByUser(@PathVariable Long userId) {
+        return commentService.getAllCommentsByUser(userId);
     }
 }

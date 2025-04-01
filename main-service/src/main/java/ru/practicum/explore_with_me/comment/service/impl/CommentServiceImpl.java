@@ -16,6 +16,8 @@ import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.model.User;
 
+import java.util.Collection;
+
 @Slf4j
 @Service
 @Transactional
@@ -46,5 +48,12 @@ public class CommentServiceImpl implements CommentService {
         } else {
             throw new NotFoundException(String.format("Comment with id=%d by author id=%d was not found", commentId, userId));
         }
+    }
+
+    @Override
+    public Collection<CommentResponse> getAllCommentsByUser(Long userId) {
+        return commentRepository.findAllByAuthor_IdOrderByPublishedOnDesc(userId).stream()
+                .map(commentMapper::commentToResponse)
+                .toList();
     }
 }

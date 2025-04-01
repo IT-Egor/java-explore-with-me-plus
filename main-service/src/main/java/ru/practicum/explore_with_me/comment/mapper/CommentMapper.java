@@ -16,6 +16,5 @@ public interface CommentMapper {
     @Mapping(target = "publishedOn", source = "commentRequest.publishedOn")
     Comment requestToComment(CreateCommentRequest commentRequest, Event event, User user);
 
-    @Mapping(target = "author", source = "comment.author")
     CommentResponse commentToResponse(Comment comment);
 }

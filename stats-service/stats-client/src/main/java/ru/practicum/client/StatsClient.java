@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import ru.practicum.exception.StatsClientException;
@@ -15,14 +14,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
-@Component
 public class StatsClient {
+    private final RestClient restClient;
+    private final String statsServerUri;
 
-    private final RestClient restClient = RestClient.create();
-    private static final String STATS_SERVER_URI = "http://localhost:9090";
+    public StatsClient(String uri) {
+        restClient = RestClient.create(uri);
+        statsServerUri = uri;
+    }
 
     public void hit(HitRequest hitRequest) {
-        String currentUri = UriComponentsBuilder.fromHttpUrl(STATS_SERVER_URI).path("/hit").toUriString();
+        String currentUri = UriComponentsBuilder.fromHttpUrl(statsServerUri).path("/hit").toUriString();
         log.info("Post request to server uri = {}", currentUri);
 
         restClient.post()
@@ -40,7 +42,7 @@ public class StatsClient {
     }
 
     public List<GetResponse> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
-        String currentUri = UriComponentsBuilder.fromHttpUrl(STATS_SERVER_URI)
+        String currentUri = UriComponentsBuilder.fromHttpUrl(statsServerUri)
                 .path("/stats")
                 .queryParam("start", start)
                 .queryParam("end", end)

@@ -8,7 +8,11 @@ import java.util.Collection;
 public interface CommentService {
     CommentResponse createComment(CreateCommentRequest createCommentRequest, Long userId);
 
-    void deleteComment(Long commentId, Long userId);
+    void deleteCommentByIdAndAuthor(Long commentId, Long userId);
 
     Collection<CommentResponse> getAllCommentsByUser(Long userId);
+
+    void deleteCommentById(Long commentId);
+
+    Collection<CommentResponse> getAllCommentsByEvent(Long eventId);
 }

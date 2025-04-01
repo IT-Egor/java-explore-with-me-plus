@@ -42,7 +42,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteComment(Long commentId, Long userId) {
+    public void deleteCommentByIdAndAuthor(Long commentId, Long userId) {
         if (commentRepository.deleteCommentByIdAndAuthor_Id(commentId, userId) != 0) {
             log.info("Comment with id={} was deleted by user id={}", commentId, userId);
         } else {
@@ -51,8 +51,24 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public void deleteCommentById(Long commentId) {
+        if (commentRepository.deleteCommentById(commentId) != 0) {
+            log.info("Comment with id={} was deleted", commentId);
+        } else {
+            throw new NotFoundException(String.format("Comment with id=%d was not found", commentId));
+        }
+    }
+
+    @Override
     public Collection<CommentResponse> getAllCommentsByUser(Long userId) {
         return commentRepository.findAllByAuthor_IdOrderByPublishedOnDesc(userId).stream()
+                .map(commentMapper::commentToResponse)
+                .toList();
+    }
+
+    @Override
+    public Collection<CommentResponse> getAllCommentsByEvent(Long eventId) {
+        return commentRepository.findAllByEvent_IdOrderByPublishedOnDesc(eventId).stream()
                 .map(commentMapper::commentToResponse)
                 .toList();
     }

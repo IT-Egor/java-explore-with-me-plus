@@ -10,5 +10,9 @@ import java.util.Collection;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     long deleteCommentByIdAndAuthor_Id(Long id, Long authorId);
 
+    long deleteCommentById(Long commentId);
+
     Collection<Comment> findAllByAuthor_IdOrderByPublishedOnDesc(Long userId);
+
+    Collection<Comment> findAllByEvent_IdOrderByPublishedOnDesc(Long eventId);
 }

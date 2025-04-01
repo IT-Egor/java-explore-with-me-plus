@@ -19,4 +19,10 @@ public class PrivateCommentController {
     public CommentResponse createComment(@Valid @RequestBody CreateCommentRequest request, @PathVariable Long userId) {
         return commentService.createComment(request, userId);
     }
+
+    @DeleteMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable Long commentId, @PathVariable Long userId) {
+        commentService.deleteComment(commentId, userId);
+    }
 }

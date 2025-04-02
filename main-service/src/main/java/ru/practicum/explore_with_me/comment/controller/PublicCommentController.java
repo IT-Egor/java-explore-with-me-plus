@@ -10,11 +10,11 @@ import java.util.Collection;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/comments")
+@RequestMapping("/events/{eventId}/comments")
 public class PublicCommentController {
     private final CommentService commentService;
 
-    @GetMapping("event/{eventId}")
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<CommentResponse> getAllCommentsByUser(@PathVariable Long eventId) {
         return commentService.getAllCommentsByEvent(eventId);

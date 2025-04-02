@@ -14,10 +14,10 @@ import ru.practicum.explore_with_me.error.model.NotFoundException;
 import ru.practicum.explore_with_me.error.model.PublicationException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
+import ru.practicum.explore_with_me.event.model.enums.EventState;
 import ru.practicum.explore_with_me.user.dao.UserRepository;
 import ru.practicum.explore_with_me.user.model.User;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 
 @Slf4j
@@ -37,8 +37,8 @@ public class CommentServiceImpl implements CommentService {
         Event event = eventRepository.findById(createCommentRequest.getEventId()).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id=%d not found", createCommentRequest.getEventId())));
 
-        if (event.getEventDate().isAfter(LocalDateTime.now())) {
-            throw new PublicationException("The event is not yet over, unable to add a comment");
+        if (!event.getState().equals(EventState.PUBLISHED)) {
+            throw new PublicationException("Event must be published");
         }
 
         Comment comment = commentMapper.requestToComment(createCommentRequest, event, user);

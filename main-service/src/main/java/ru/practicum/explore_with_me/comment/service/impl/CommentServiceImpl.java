@@ -34,10 +34,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponse createComment(MergeCommentRequest mergeCommentRequest, Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() ->
-                new NotFoundException(String.format("User with id=%d not found", userId)));
-        Event event = eventRepository.findById(mergeCommentRequest.getEventId()).orElseThrow(() ->
-                new NotFoundException(String.format("Event with id=%d not found", mergeCommentRequest.getEventId())));
+        User user = findUserById(userId);
+        Event event = findEventById(mergeCommentRequest.getEventId());
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new PublicationException("Event must be published");
@@ -71,9 +69,29 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponse updateCommentByIdAndAuthorId(Long commentId, Long userId, MergeCommentRequest request) {
         Comment oldComment = commentRepository.findByIdAndAuthor_Id(commentId, userId).orElseThrow(() ->
                 new NotFoundException(String.format("Comment with id=%d by author id=%d was not found", commentId, userId)));
-        commentMapper.updateComment(request, oldComment);
+
+        commentMapper.updateComment(
+                request,
+                findEventById(request.getEventId()),
+                oldComment);
+
         CommentResponse response = commentMapper.commentToResponse(commentRepository.save(oldComment));
         log.info("Comment id={} was updated by user id={}", response.getId(), response.getAuthor().getId());
+        return response;
+    }
+
+    @Override
+    public CommentResponse updateCommentById(Long commentId, MergeCommentRequest mergeCommentRequest) {
+        Comment oldComment = commentRepository.findById(commentId).orElseThrow(() ->
+                new NotFoundException(String.format("Comment with id=%d was not found", commentId)));
+
+        commentMapper.updateComment(
+                mergeCommentRequest,
+                findEventById(mergeCommentRequest.getEventId()),
+                oldComment);
+
+        CommentResponse response = commentMapper.commentToResponse(commentRepository.save(oldComment));
+        log.info("Comment id={} was updated", response.getId());
         return response;
     }
 
@@ -98,5 +116,15 @@ public class CommentServiceImpl implements CommentService {
     private Pageable createPageable(Integer from, Integer size) {
         int pageNumber = from / size;
         return  PageRequest.of(pageNumber, size);
+    }
+
+    private Event findEventById(Long eventId) {
+        return eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(String.format("Event with id=%d not found", eventId)));
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User with id=%d not found", userId)));
     }
 }

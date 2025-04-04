@@ -113,6 +113,22 @@ public class CommentServiceImpl implements CommentService {
                 .toList();
     }
 
+    @Override
+    public Collection<CommentResponse> getAllCommentsByUserAndEvent(Long userId, Long eventId, Integer from, Integer size) {
+        log.info("Get all comments for event id={} and user id={}", eventId, userId);
+        return commentRepository.findAllByAuthor_IdAndEvent_IdOrderByPublishedOnDesc(userId, eventId, createPageable(from, size))
+                .stream()
+                .map(commentMapper::commentToResponse)
+                .toList();
+    }
+
+    @Override
+    public CommentResponse getCommentById(Long commentId) {
+        log.info("Get comment with id={}", commentId);
+        return commentMapper.commentToResponse(commentRepository.findById(commentId).orElseThrow(() ->
+                new NotFoundException(String.format("Comment with id=%d was not found", commentId))));
+    }
+
     private Pageable createPageable(Integer from, Integer size) {
         int pageNumber = from / size;
         return  PageRequest.of(pageNumber, size);

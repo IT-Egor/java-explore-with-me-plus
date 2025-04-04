@@ -43,4 +43,13 @@ public class PrivateCommentController {
                                                             @RequestParam(defaultValue = "10") Integer size) {
         return commentService.getAllCommentsByUser(userId, from, size);
     }
+
+    @GetMapping("events/{eventId}")
+    @ResponseStatus(HttpStatus.OK)
+    public Collection<CommentResponse> getAllCommentsByEvent(@PathVariable Long eventId,
+                                                             @PathVariable Long userId,
+                                                             @RequestParam(defaultValue = "0") Integer from,
+                                                             @RequestParam(defaultValue = "10") Integer size) {
+        return commentService.getAllCommentsByUserAndEvent(userId, eventId, from, size);
+    }
 }

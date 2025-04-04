@@ -20,4 +20,8 @@ public interface CommentService {
     CommentResponse updateCommentByIdAndAuthorId(Long commentId, Long userId, MergeCommentRequest request);
 
     CommentResponse updateCommentById(Long commentId, @Valid MergeCommentRequest mergeCommentRequest);
+
+    Collection<CommentResponse> getAllCommentsByUserAndEvent(Long userId, Long eventId, Integer from, Integer size);
+
+    CommentResponse getCommentById(Long commentId);
 }

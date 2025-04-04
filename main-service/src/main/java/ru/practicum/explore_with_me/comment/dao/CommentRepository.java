@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.practicum.explore_with_me.comment.model.Comment;
 
+import java.util.Optional;
+
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     long deleteCommentByIdAndAuthor_Id(Long id, Long authorId);
@@ -15,4 +17,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Page<Comment> findAllByAuthor_IdOrderByPublishedOnDesc(Long userId, Pageable pageable);
 
     Page<Comment> findAllByEvent_IdOrderByPublishedOnDesc(Long eventId, Pageable pageable);
+
+    Optional<Comment> findByIdAndAuthor_Id(Long commentId, Long authorId);
 }

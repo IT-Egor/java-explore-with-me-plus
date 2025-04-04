@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.explore_with_me.comment.dto.CommentResponse;
-import ru.practicum.explore_with_me.comment.dto.CreateCommentRequest;
+import ru.practicum.explore_with_me.comment.dto.MergeCommentRequest;
 import ru.practicum.explore_with_me.comment.service.CommentService;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class PrivateCommentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommentResponse createComment(@Valid @RequestBody CreateCommentRequest request, @PathVariable Long userId) {
+    public CommentResponse createComment(@Valid @RequestBody MergeCommentRequest request, @PathVariable Long userId) {
         return commentService.createComment(request, userId);
     }
 
@@ -26,6 +26,14 @@ public class PrivateCommentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable Long commentId, @PathVariable Long userId) {
         commentService.deleteCommentByIdAndAuthor(commentId, userId);
+    }
+
+    @PatchMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.OK)
+    public CommentResponse updateComment(@Valid @RequestBody MergeCommentRequest request,
+                                         @PathVariable Long userId,
+                                         @PathVariable Long commentId) {
+        return commentService.updateCommentByIdAndAuthorId(commentId, userId, request);
     }
 
     @GetMapping

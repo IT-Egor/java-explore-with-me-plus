@@ -1,9 +1,8 @@
 package ru.practicum.explore_with_me.comment.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 import ru.practicum.explore_with_me.comment.dto.CommentResponse;
-import ru.practicum.explore_with_me.comment.dto.CreateCommentRequest;
+import ru.practicum.explore_with_me.comment.dto.MergeCommentRequest;
 import ru.practicum.explore_with_me.comment.model.Comment;
 import ru.practicum.explore_with_me.event.model.Event;
 import ru.practicum.explore_with_me.user.model.User;
@@ -14,7 +13,11 @@ public interface CommentMapper {
     @Mapping(target = "event", source = "event")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "publishedOn", source = "commentRequest.publishedOn")
-    Comment requestToComment(CreateCommentRequest commentRequest, Event event, User user);
+    Comment requestToComment(MergeCommentRequest commentRequest, Event event, User user);
 
     CommentResponse commentToResponse(Comment comment);
+
+    @Mapping(target = "id", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateComment(MergeCommentRequest commentRequest, @MappingTarget Comment comment);
 }

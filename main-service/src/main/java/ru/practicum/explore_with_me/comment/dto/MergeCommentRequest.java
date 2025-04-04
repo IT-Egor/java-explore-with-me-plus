@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateCommentRequest {
+public class MergeCommentRequest {
     @NotNull(message = "Event id is required")
     Long eventId;
 

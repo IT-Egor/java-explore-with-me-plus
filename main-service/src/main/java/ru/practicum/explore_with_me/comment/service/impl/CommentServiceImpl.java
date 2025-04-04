@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.comment.dao.CommentRepository;
 import ru.practicum.explore_with_me.comment.dto.CommentResponse;
-import ru.practicum.explore_with_me.comment.dto.CreateCommentRequest;
+import ru.practicum.explore_with_me.comment.dto.MergeCommentRequest;
 import ru.practicum.explore_with_me.comment.mapper.CommentMapper;
 import ru.practicum.explore_with_me.comment.model.Comment;
 import ru.practicum.explore_with_me.comment.service.CommentService;
@@ -33,17 +33,17 @@ public class CommentServiceImpl implements CommentService {
     private final EventRepository eventRepository;
 
     @Override
-    public CommentResponse createComment(CreateCommentRequest createCommentRequest, Long userId) {
+    public CommentResponse createComment(MergeCommentRequest mergeCommentRequest, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User with id=%d not found", userId)));
-        Event event = eventRepository.findById(createCommentRequest.getEventId()).orElseThrow(() ->
-                new NotFoundException(String.format("Event with id=%d not found", createCommentRequest.getEventId())));
+        Event event = eventRepository.findById(mergeCommentRequest.getEventId()).orElseThrow(() ->
+                new NotFoundException(String.format("Event with id=%d not found", mergeCommentRequest.getEventId())));
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new PublicationException("Event must be published");
         }
 
-        Comment comment = commentMapper.requestToComment(createCommentRequest, event, user);
+        Comment comment = commentMapper.requestToComment(mergeCommentRequest, event, user);
         CommentResponse response = commentMapper.commentToResponse(commentRepository.save(comment));
         log.info("Comment id={} was created by user id={}", response.getId(), response.getAuthor().getId());
         return response;
@@ -68,7 +68,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public CommentResponse updateCommentByIdAndAuthorId(Long commentId, Long userId, MergeCommentRequest request) {
+        Comment oldComment = commentRepository.findByIdAndAuthor_Id(commentId, userId).orElseThrow(() ->
+                new NotFoundException(String.format("Comment with id=%d by author id=%d was not found", commentId, userId)));
+        commentMapper.updateComment(request, oldComment);
+        CommentResponse response = commentMapper.commentToResponse(commentRepository.save(oldComment));
+        log.info("Comment id={} was updated by user id={}", response.getId(), response.getAuthor().getId());
+        return response;
+    }
+
+    @Override
     public Collection<CommentResponse> getAllCommentsByUser(Long userId, Integer from, Integer size) {
+        log.info("Get all comments for user id={}", userId);
         return commentRepository.findAllByAuthor_IdOrderByPublishedOnDesc(userId, createPageable(from, size))
                 .stream()
                 .map(commentMapper::commentToResponse)
@@ -77,6 +88,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public Collection<CommentResponse> getAllCommentsByEvent(Long eventId, Integer from, Integer size) {
+        log.info("Get all comments for event id={}", eventId);
         return commentRepository.findAllByEvent_IdOrderByPublishedOnDesc(eventId, createPageable(from, size))
                 .stream()
                 .map(commentMapper::commentToResponse)

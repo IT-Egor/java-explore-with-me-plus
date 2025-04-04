@@ -30,7 +30,9 @@ public class PrivateCommentController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<CommentResponse> getAllCommentsByUser(@PathVariable Long userId) {
-        return commentService.getAllCommentsByUser(userId);
+    public Collection<CommentResponse> getAllCommentsByUser(@PathVariable Long userId,
+                                                            @RequestParam(defaultValue = "0") Integer from,
+                                                            @RequestParam(defaultValue = "10") Integer size) {
+        return commentService.getAllCommentsByUser(userId, from, size);
     }
 }

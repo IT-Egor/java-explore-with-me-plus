@@ -10,9 +10,9 @@ public interface CommentService {
 
     void deleteCommentByIdAndAuthor(Long commentId, Long userId);
 
-    Collection<CommentResponse> getAllCommentsByUser(Long userId);
+    Collection<CommentResponse> getAllCommentsByUser(Long userId, Integer from, Integer size);
 
     void deleteCommentById(Long commentId);
 
-    Collection<CommentResponse> getAllCommentsByEvent(Long eventId);
+    Collection<CommentResponse> getAllCommentsByEvent(Long eventId, Integer from, Integer size);
 }

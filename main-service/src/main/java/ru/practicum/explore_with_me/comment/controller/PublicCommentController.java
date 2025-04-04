@@ -16,7 +16,9 @@ public class PublicCommentController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<CommentResponse> getAllCommentsByUser(@PathVariable Long eventId) {
-        return commentService.getAllCommentsByEvent(eventId);
+    public Collection<CommentResponse> getAllCommentsByEvent(@PathVariable Long eventId,
+                                                             @RequestParam(defaultValue = "0") Integer from,
+                                                             @RequestParam(defaultValue = "10") Integer size) {
+        return commentService.getAllCommentsByEvent(eventId, from, size);
     }
 }

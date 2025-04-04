@@ -1,10 +1,10 @@
 package ru.practicum.explore_with_me.comment.dao;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.practicum.explore_with_me.comment.model.Comment;
-
-import java.util.Collection;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -12,7 +12,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     long deleteCommentById(Long commentId);
 
-    Collection<Comment> findAllByAuthor_IdOrderByPublishedOnDesc(Long userId);
+    Page<Comment> findAllByAuthor_IdOrderByPublishedOnDesc(Long userId, Pageable pageable);
 
-    Collection<Comment> findAllByEvent_IdOrderByPublishedOnDesc(Long eventId);
+    Page<Comment> findAllByEvent_IdOrderByPublishedOnDesc(Long eventId, Pageable pageable);
 }

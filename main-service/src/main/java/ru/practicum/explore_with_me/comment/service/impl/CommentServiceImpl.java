@@ -2,6 +2,8 @@ package ru.practicum.explore_with_me.comment.service.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.explore_with_me.comment.dao.CommentRepository;
@@ -66,16 +68,23 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public Collection<CommentResponse> getAllCommentsByUser(Long userId) {
-        return commentRepository.findAllByAuthor_IdOrderByPublishedOnDesc(userId).stream()
+    public Collection<CommentResponse> getAllCommentsByUser(Long userId, Integer from, Integer size) {
+        return commentRepository.findAllByAuthor_IdOrderByPublishedOnDesc(userId, createPageable(from, size))
+                .stream()
                 .map(commentMapper::commentToResponse)
                 .toList();
     }
 
     @Override
-    public Collection<CommentResponse> getAllCommentsByEvent(Long eventId) {
-        return commentRepository.findAllByEvent_IdOrderByPublishedOnDesc(eventId).stream()
+    public Collection<CommentResponse> getAllCommentsByEvent(Long eventId, Integer from, Integer size) {
+        return commentRepository.findAllByEvent_IdOrderByPublishedOnDesc(eventId, createPageable(from, size))
+                .stream()
                 .map(commentMapper::commentToResponse)
                 .toList();
+    }
+
+    private Pageable createPageable(Integer from, Integer size) {
+        int pageNumber = from / size;
+        return  PageRequest.of(pageNumber, size);
     }
 }

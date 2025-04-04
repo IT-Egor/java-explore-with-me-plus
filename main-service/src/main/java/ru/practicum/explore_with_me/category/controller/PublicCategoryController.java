@@ -26,10 +26,10 @@ public class PublicCategoryController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<CategoryDto> getCategories(@PositiveOrZero(message = "from must be greater or equal to zero")
-                                                      @RequestParam(defaultValue = "0") Integer from,
+                                                 @RequestParam(defaultValue = "0") Integer from,
 
                                                  @Positive(message = "size must be greater than zero")
-                                                      @RequestParam(defaultValue = "10") Integer size) {
+                                                 @RequestParam(defaultValue = "10") Integer size) {
         return categoryService.getCategories(from, size);
     }
 

@@ -368,7 +368,6 @@
 									"    const api = new API(pm);\r",
 									"    const rnd = new RandomUtils();\r",
 									"\r",
-									"    let comment;\r",
 									"    let comment2;\r",
 									"    try {\r",
 									"        const user = await api.addUser(rnd.getUser());\r",
@@ -376,7 +375,7 @@
 									"        const category = await api.addCategory(rnd.getCategory());\r",
 									"        const event = await api.addEvent(user.id, rnd.getEvent(category.id));\r",
 									"        await api.publishEvent(event.id);\r",
-									"        comment = await api.addComment(event.id,rnd.getComment(event.id));\r",
+									"        const comment = await api.addComment(user.id,rnd.getComment(event.id));\r",
 									"        pm.collectionVariables.set(\"comId\", comment.id)\r",
 									"        comment2 = rnd.getComment(event.id);\r",
 									"    } catch(err) {\r",
@@ -691,7 +690,7 @@
 					"response": []
 				},
 				{
-					"name": "Получение комментариев пользователя Copy",
+					"name": "Получение комментариев пользователя к событию",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -902,7 +901,7 @@
 					"response": []
 				},
 				{
-					"name": "Получение комментариев события Copy",
+					"name": "Получение комментария",
 					"event": [
 						{
 							"listen": "prerequest",

@@ -22,7 +22,7 @@ public class PublicCommentController {
         return commentService.getAllCommentsByEvent(eventId, from, size);
     }
 
-    @GetMapping("comments/{commentId}")
+    @GetMapping("/comments/{commentId}")
     @ResponseStatus(HttpStatus.OK)
     public CommentResponse getCommentById(@PathVariable Long commentId) {
         return commentService.getCommentById(commentId);

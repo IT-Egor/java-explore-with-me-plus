@@ -13,6 +13,7 @@ import ru.practicum.explore_with_me.comment.mapper.CommentMapper;
 import ru.practicum.explore_with_me.comment.model.Comment;
 import ru.practicum.explore_with_me.comment.service.CommentService;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
+import ru.practicum.explore_with_me.error.model.PatchCommentByNotCorrectEventId;
 import ru.practicum.explore_with_me.error.model.PublicationException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
@@ -70,6 +71,10 @@ public class CommentServiceImpl implements CommentService {
         Comment oldComment = commentRepository.findByIdAndAuthor_Id(commentId, userId).orElseThrow(() ->
                 new NotFoundException(String.format("Comment with id=%d by author id=%d was not found", commentId, userId)));
 
+        if (!oldComment.getEvent().getId().equals(request.getEventId())) {
+            throw new PatchCommentByNotCorrectEventId("Event Id not correct");
+        }
+
         commentMapper.updateComment(
                 request,
                 findEventById(request.getEventId()),
@@ -84,6 +89,10 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponse updateCommentById(Long commentId, MergeCommentRequest mergeCommentRequest) {
         Comment oldComment = commentRepository.findById(commentId).orElseThrow(() ->
                 new NotFoundException(String.format("Comment with id=%d was not found", commentId)));
+
+        if (!oldComment.getEvent().getId().equals(mergeCommentRequest.getEventId())) {
+            throw new PatchCommentByNotCorrectEventId("Event Id not correct");
+        }
 
         commentMapper.updateComment(
                 mergeCommentRequest,
@@ -131,7 +140,7 @@ public class CommentServiceImpl implements CommentService {
 
     private Pageable createPageable(Integer from, Integer size) {
         int pageNumber = from / size;
-        return  PageRequest.of(pageNumber, size);
+        return PageRequest.of(pageNumber, size);
     }
 
     private Event findEventById(Long eventId) {

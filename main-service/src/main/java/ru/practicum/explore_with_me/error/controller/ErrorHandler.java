@@ -161,19 +161,6 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handlePatchCommentByNotCorrectEventId(PatchCommentByNotCorrectEventId e) {
-        String reasonMessage = "Request to not correct eventId";
-        log.error("CONFLICT: {}", reasonMessage, e);
-        return ErrorResponse.builder()
-                .errors(List.of(e.getMessage()))
-                .message(e.getMessage())
-                .reason(reasonMessage)
-                .status(HttpStatus.CONFLICT.toString())
-                .build();
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleRequestLimitException(RequestLimitException e) {
         String reasonMessage = "Limit request";
         log.error("CONFLICT: {}", reasonMessage, e);

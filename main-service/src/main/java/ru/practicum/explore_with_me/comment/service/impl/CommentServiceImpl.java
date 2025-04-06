@@ -2,6 +2,7 @@ package ru.practicum.explore_with_me.comment.service.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,6 @@ import ru.practicum.explore_with_me.comment.mapper.CommentMapper;
 import ru.practicum.explore_with_me.comment.model.Comment;
 import ru.practicum.explore_with_me.comment.service.CommentService;
 import ru.practicum.explore_with_me.error.model.NotFoundException;
-import ru.practicum.explore_with_me.error.model.PatchCommentByNotCorrectEventId;
 import ru.practicum.explore_with_me.error.model.PublicationException;
 import ru.practicum.explore_with_me.event.dao.EventRepository;
 import ru.practicum.explore_with_me.event.model.Event;
@@ -72,7 +72,7 @@ public class CommentServiceImpl implements CommentService {
                 new NotFoundException(String.format("Comment with id=%d by author id=%d was not found", commentId, userId)));
 
         if (!oldComment.getEvent().getId().equals(request.getEventId())) {
-            throw new PatchCommentByNotCorrectEventId("Event Id not correct");
+            throw new DataIntegrityViolationException("Event Id not correct");
         }
 
         commentMapper.updateComment(
@@ -91,7 +91,7 @@ public class CommentServiceImpl implements CommentService {
                 new NotFoundException(String.format("Comment with id=%d was not found", commentId)));
 
         if (!oldComment.getEvent().getId().equals(mergeCommentRequest.getEventId())) {
-            throw new PatchCommentByNotCorrectEventId("Event Id not correct");
+            throw new DataIntegrityViolationException("Event Id not correct");
         }
 
         commentMapper.updateComment(
